@@ -1,4 +1,4 @@
-package gui;
+package com.robot.gui;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="gui.GameVisualizerTest" time="0.148" tests="11" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.robot.gui.MainApplicationFrameTest" time="0.569" tests="7" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="22"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -15,7 +15,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="RU"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk-22.0.2\bin"/>
-    <property name="sun.java.command" value="C:\Users\3D1B~1\AppData\Local\Temp\surefire7125517814254148068\surefirebooter17437172795528002667.jar C:\Users\Альтер\AppData\Local\Temp\surefire7125517814254148068 2025-03-17T10-00-15_699-jvmRun1 surefire14436445796117979452tmp surefire_07349853627325005682tmp"/>
+    <property name="sun.java.command" value="C:\Users\3D1B~1\AppData\Local\Temp\surefire12111459700917014391\surefirebooter10469913663891423969.jar C:\Users\Альтер\AppData\Local\Temp\surefire12111459700917014391 2025-03-17T10-05-00_831-jvmRun1 surefire10010778444820366735tmp surefire_01538717598963720668tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="C:\Users\Альтер\Desktop\Game\target\test-classes;C:\Users\Альтер\Desktop\Game\target\classes;C:\Users\Альтер\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.8.1\junit-jupiter-api-5.8.1.jar;C:\Users\Альтер\.m2\repository\org\opentest4j\opentest4j\1.2.0\opentest4j-1.2.0.jar;C:\Users\Альтер\.m2\repository\org\junit\platform\junit-platform-commons\1.8.1\junit-platform-commons-1.8.1.jar;C:\Users\Альтер\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\Альтер\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.8.1\junit-jupiter-engine-5.8.1.jar;C:\Users\Альтер\.m2\repository\org\junit\platform\junit-platform-engine\1.8.1\junit-platform-engine-1.8.1.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -30,7 +30,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\3D1B~1\AppData\Local\Temp\surefire7125517814254148068\surefirebooter17437172795528002667.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\3D1B~1\AppData\Local\Temp\surefire12111459700917014391\surefirebooter10469913663891423969.jar"/>
     <property name="user.script" value=""/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="22.0.2+9-70"/>
@@ -58,15 +58,11 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="66.0"/>
   </properties>
-  <testcase name="testDistanceCalculation" classname="gui.GameVisualizerTest" time="0.113"/>
-  <testcase name="testRedrawEvent" classname="gui.GameVisualizerTest" time="0.001"/>
-  <testcase name="testPaint" classname="gui.GameVisualizerTest" time="0.012"/>
-  <testcase name="testMouseClicked" classname="gui.GameVisualizerTest" time="0.009"/>
-  <testcase name="testSetTargetPosition" classname="gui.GameVisualizerTest" time="0.001"/>
-  <testcase name="testOnModelUpdateEvent" classname="gui.GameVisualizerTest" time="0.001"/>
-  <testcase name="testInitialSetup" classname="gui.GameVisualizerTest" time="0.001"/>
-  <testcase name="testAsNormalizedRadians" classname="gui.GameVisualizerTest" time="0.001"/>
-  <testcase name="testAngleToCalculation" classname="gui.GameVisualizerTest" time="0.001"/>
-  <testcase name="testApplyLimits" classname="gui.GameVisualizerTest" time="0.001"/>
-  <testcase name="testMoveRobot" classname="gui.GameVisualizerTest" time="0"/>
+  <testcase name="testAddLogMessageMenuItem" classname="com.robot.gui.MainApplicationFrameTest" time="0.302"/>
+  <testcase name="testLookAndFeelChange" classname="com.robot.gui.MainApplicationFrameTest" time="0.034"/>
+  <testcase name="testLogWindowCreation" classname="com.robot.gui.MainApplicationFrameTest" time="0.085"/>
+  <testcase name="testTestMenu" classname="com.robot.gui.MainApplicationFrameTest" time="0.035"/>
+  <testcase name="testGameWindowCreation" classname="com.robot.gui.MainApplicationFrameTest" time="0.036"/>
+  <testcase name="testLookAndFeelMenu" classname="com.robot.gui.MainApplicationFrameTest" time="0.035"/>
+  <testcase name="testInitialSetup" classname="com.robot.gui.MainApplicationFrameTest" time="0.039"/>
 </testsuite>

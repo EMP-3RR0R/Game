@@ -1,4 +1,4 @@
-package log;
+package com.robot.log;
 
 public final class Logger
 {

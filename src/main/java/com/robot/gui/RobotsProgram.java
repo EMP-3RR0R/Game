@@ -1,4 +1,4 @@
-package gui;
+package com.robot.gui;
 
 import java.awt.Frame;
 
