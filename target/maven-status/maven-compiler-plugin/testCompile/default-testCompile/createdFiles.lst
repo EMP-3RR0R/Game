@@ -1,2 +1,4 @@
-com\robot\gui\MainApplicationFrameTest.class
+com\robot\log\LogWindowSourceTest$MockLogChangeListener.class
 com\robot\gui\GameVisualizerTest.class
+com\robot\log\LogWindowSourceTest.class
+com\robot\gui\MainApplicationFrameTest.class

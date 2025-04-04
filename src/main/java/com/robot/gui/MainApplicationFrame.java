@@ -3,6 +3,8 @@ package com.robot.gui;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
@@ -15,10 +17,11 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import com.robot.log.Logger;
+import com.robot.log.LogWindowSource;
 
 public class MainApplicationFrame extends JFrame {
-
     private final JDesktopPane desktopPane = new JDesktopPane();
+    private LogWindow logWindow;
 
     public MainApplicationFrame() {
         int inset = 50;
@@ -26,7 +29,7 @@ public class MainApplicationFrame extends JFrame {
         setBounds(inset, inset, screenSize.width - inset * 2, screenSize.height - inset * 2);
         setContentPane(desktopPane);
 
-        LogWindow logWindow = createLogWindow();
+        logWindow = createLogWindow();
         addWindow(logWindow);
 
         GameWindow gameWindow = new GameWindow();
@@ -35,6 +38,14 @@ public class MainApplicationFrame extends JFrame {
 
         setJMenuBar(createMenuBar());
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                LogWindowSource source = Logger.getDefaultLogSource();
+                source.unregisterListener(logWindow);
+                super.windowClosing(e);
+            }
+        });
     }
 
     protected LogWindow createLogWindow() {
