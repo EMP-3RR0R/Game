@@ -5,16 +5,10 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
-import javax.swing.JDesktopPane;
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.*;
 
 import com.robot.log.Logger;
 import com.robot.log.LogWindowSource;
@@ -22,8 +16,10 @@ import com.robot.log.LogWindowSource;
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
     private LogWindow logWindow;
+    private ResourceBundle messages;
 
     public MainApplicationFrame() {
+        messages = ResourceBundle.getBundle("com.robot.gui.messages", BaseInternalFrame.currentLocale);
         int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset, screenSize.width - inset * 2, screenSize.height - inset * 2);
@@ -37,17 +33,73 @@ public class MainApplicationFrame extends JFrame {
         addWindow(gameWindow);
 
         setJMenuBar(createMenuBar());
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                LogWindowSource source = Logger.getDefaultLogSource();
-                source.unregisterListener(logWindow);
-                super.windowClosing(e);
+                exitApplication();
             }
         });
     }
 
+    private void exitApplication() {
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                messages.getString("confirm.exit.message"),
+                messages.getString("confirm.exit.title"),
+                JOptionPane.YES_NO_OPTION
+        );
+        if (result == JOptionPane.YES_OPTION) {
+            LogWindowSource source = Logger.getDefaultLogSource();
+            source.unregisterListener(logWindow);
+            System.exit(0);
+        }
+    }
+
+    private JMenuBar createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(createLookAndFeelMenu());
+        menuBar.add(createLanguageMenu());
+        menuBar.add(createTestMenu());
+
+        JMenuItem exitItem = new JMenuItem(messages.getString("menu.exit"));
+        exitItem.addActionListener(e -> exitApplication());
+        menuBar.add(exitItem);
+
+        return menuBar;
+    }
+
+    private JMenu createLanguageMenu() {
+        JMenu languageMenu = new JMenu(messages.getString("menu.language"));
+        languageMenu.setMnemonic(KeyEvent.VK_L);
+
+        JMenuItem englishItem = new JMenuItem("English");
+        englishItem.addActionListener(e -> changeLanguage(Locale.ENGLISH));
+
+        JMenuItem russianItem = new JMenuItem("Русский");
+        russianItem.addActionListener(e -> changeLanguage(new Locale("ru", "RU")));
+
+        languageMenu.add(englishItem);
+        languageMenu.add(russianItem);
+        return languageMenu;
+    }
+
+    private void changeLanguage(Locale locale) {
+        BaseInternalFrame.setAppLocale(locale);
+        messages = ResourceBundle.getBundle("com.robot.gui.messages", locale);
+        updateAllWindows();
+        SwingUtilities.updateComponentTreeUI(this);
+        invalidate();
+        repaint();
+    }
+
+    private void updateAllWindows() {
+        for (JInternalFrame frame : desktopPane.getAllFrames()) {
+            if (frame instanceof BaseInternalFrame) {
+                ((BaseInternalFrame) frame).updateLocale();
+            }
+        }
+    }
     protected LogWindow createLogWindow() {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
         logWindow.setLocation(10, 10);
@@ -63,12 +115,6 @@ public class MainApplicationFrame extends JFrame {
         frame.setVisible(true);
     }
 
-    private JMenuBar createMenuBar() {
-        JMenuBar menuBar = new JMenuBar();
-        menuBar.add(createLookAndFeelMenu());
-        menuBar.add(createTestMenu());
-        return menuBar;
-    }
 
     private JMenu createLookAndFeelMenu() {
         JMenu lookAndFeelMenu = new JMenu("Режим отображения");
