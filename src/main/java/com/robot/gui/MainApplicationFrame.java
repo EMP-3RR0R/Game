@@ -74,7 +74,7 @@ public class MainApplicationFrame extends JFrame {
         languageMenu.setMnemonic(KeyEvent.VK_L);
 
         JMenuItem englishItem = new JMenuItem("English");
-        englishItem.addActionListener(e -> changeLanguage(Locale.ENGLISH));
+        englishItem.addActionListener(e -> changeLanguage(new Locale("en", "EN")));
 
         JMenuItem russianItem = new JMenuItem("Русский");
         russianItem.addActionListener(e -> changeLanguage(new Locale("ru", "RU")));
