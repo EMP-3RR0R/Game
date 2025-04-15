@@ -14,9 +14,9 @@ import com.robot.log.Logger;
 import com.robot.log.LogWindowSource;
 
 public class MainApplicationFrame extends JFrame {
-    private final JDesktopPane desktopPane = new JDesktopPane();
+    protected final JDesktopPane desktopPane = new JDesktopPane();
     private LogWindow logWindow;
-    private ResourceBundle messages;
+    protected ResourceBundle messages;
 
     public MainApplicationFrame() {
         messages = ResourceBundle.getBundle("com.robot.gui.messages", BaseInternalFrame.currentLocale);
@@ -42,7 +42,7 @@ public class MainApplicationFrame extends JFrame {
         });
     }
 
-    private void exitApplication() {
+    protected void exitApplication() {
         int result = JOptionPane.showConfirmDialog(
                 this,
                 messages.getString("confirm.exit.message"),
@@ -84,7 +84,7 @@ public class MainApplicationFrame extends JFrame {
         return languageMenu;
     }
 
-    private void changeLanguage(Locale locale) {
+    protected void changeLanguage(Locale locale) {
         BaseInternalFrame.setAppLocale(locale);
         messages = ResourceBundle.getBundle("com.robot.gui.messages", locale);
         updateAllWindows();
@@ -93,7 +93,7 @@ public class MainApplicationFrame extends JFrame {
         repaint();
     }
 
-    private void updateAllWindows() {
+    protected void updateAllWindows() {
         for (JInternalFrame frame : desktopPane.getAllFrames()) {
             if (frame instanceof BaseInternalFrame) {
                 ((BaseInternalFrame) frame).updateLocale();
