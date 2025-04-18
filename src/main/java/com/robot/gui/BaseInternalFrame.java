@@ -16,7 +16,7 @@ public abstract class BaseInternalFrame extends JInternalFrame {
         if (systemLocale.getLanguage().equals("ru")) {
             currentLocale = new Locale("ru", "RU");
         } else {
-            currentLocale = Locale.ENGLISH;
+            currentLocale = new Locale("en", "EN");
         }
     }
 
