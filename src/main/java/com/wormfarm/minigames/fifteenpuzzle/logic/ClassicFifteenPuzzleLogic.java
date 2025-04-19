@@ -2,13 +2,21 @@ package com.wormfarm.minigames.fifteenpuzzle.logic;
 
 import com.wormfarm.minigames.fifteenpuzzle.api.FifteenPuzzleGame;
 import com.wormfarm.minigames.fifteenpuzzle.events.PuzzleEventListener;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
     private final int size;
     private final int[][] board;
     private final List<PuzzleEventListener> listeners = new ArrayList<>();
+    private final Random random = new Random();
+
+    private int moveCount = 0;
+    private long startTime = 0;
+    private long endTime = 0;
+    private boolean isShuffling = false;
 
     public ClassicFifteenPuzzleLogic(int size) {
         this.size = size;
@@ -37,9 +45,11 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
             int emptyX = getEmptyX(), emptyY = getEmptyY();
             board[emptyX][emptyY] = board[x][y];
             board[x][y] = 0;
+            if (!isShuffling) moveCount++;
             success = true;
             fireMoveEvent(x, y, true);
-            if (isSolved()) {
+            if (!isShuffling && isSolved()) {
+                stopTimer();
                 fireWinEvent();
             }
         } else {
@@ -73,6 +83,34 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
             }
         }
         board[size - 1][size - 1] = 0;
+        moveCount = 0;
+        startTimer();
+        shuffleBoard(5000 + random.nextInt(10000));
+    }
+
+    public void shuffleBoard(int minMoves) {
+        isShuffling = true;
+        int lastX = getEmptyX();
+        int lastY = getEmptyY();
+        for (int i = 0; i < minMoves; i++) {
+            List<int[]> moves = getAdjacentTiles(lastX, lastY);
+            int[] move = moves.get(random.nextInt(moves.size()));
+            moveTile(move[0], move[1]);
+            lastX = getEmptyX();
+            lastY = getEmptyY();
+        }
+        moveCount = 0; // не считаем ходы при перемешивании
+        startTimer();
+        isShuffling = false;
+    }
+
+    private List<int[]> getAdjacentTiles(int emptyX, int emptyY) {
+        List<int[]> list = new ArrayList<>();
+        if (emptyX > 0) list.add(new int[] {emptyX - 1, emptyY});
+        if (emptyX < size - 1) list.add(new int[] {emptyX + 1, emptyY});
+        if (emptyY > 0) list.add(new int[] {emptyX, emptyY - 1});
+        if (emptyY < size - 1) list.add(new int[] {emptyX, emptyY + 1});
+        return list;
     }
 
     private boolean isValidMove(int x, int y) {
@@ -95,6 +133,37 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
         throw new IllegalStateException("Empty tile not found");
     }
 
+    public boolean[][] getCorrectTilesMask() {
+        boolean[][] mask = new boolean[size][size];
+        int expected = 1;
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (i == size - 1 && j == size - 1) {
+                    mask[i][j] = board[i][j] == 0;
+                } else {
+                    mask[i][j] = board[i][j] == expected;
+                }
+                expected++;
+            }
+        }
+        return mask;
+    }
+
+    /** Решает пятнашки "читерски" — выставляет их в правильное состояние */
+    public void solvePuzzle() {
+        int count = 1;
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                board[i][j] = count++;
+            }
+        }
+        board[size - 1][size - 1] = 0;
+        moveCount = 0;
+        stopTimer();
+        fireMoveEvent(-1, -1, true);
+        fireWinEvent();
+    }
+
     @Override
     public void addEventListener(PuzzleEventListener listener) {
         listeners.add(listener);
@@ -111,5 +180,24 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
 
     private void fireWinEvent() {
         for (PuzzleEventListener l : listeners) l.onWin();
+    }
+
+    // --- Move counter and timer ---
+
+    public int getMoveCount() {
+        return moveCount;
+    }
+
+    public void startTimer() {
+        startTime = System.currentTimeMillis();
+        endTime = 0;
+    }
+
+    public void stopTimer() {
+        endTime = System.currentTimeMillis();
+    }
+
+    public long getElapsedTimeMillis() {
+        return (endTime > 0 ? endTime : System.currentTimeMillis()) - startTime;
     }
 }

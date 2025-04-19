@@ -4,8 +4,10 @@ import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.model.EventMarker;
 import com.wormfarm.core.model.EventMapModel;
 import com.wormfarm.core.logic.WormMover;
+import com.wormfarm.gui.frame.MainApplicationFrame;
 import com.wormfarm.minigames.fifteenpuzzle.ui.swing.FifteenPuzzleFrame;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -14,16 +16,19 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Image;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class WormMapPanel extends JPanel {
-    public static final int FIELD_WIDTH = 800;
-    public static final int FIELD_HEIGHT = 800;
+    public static final int FIELD_WIDTH = MainApplicationFrame.MAP_HEIGHT-16;
+    public static final int FIELD_HEIGHT = MainApplicationFrame.MAP_HEIGHT-43;
 
     private final WormState worm;
     private final EventMapModel mapModel;
@@ -37,6 +42,45 @@ public class WormMapPanel extends JPanel {
 
     private final Timer timerRedraw;
     private final Timer timerModel;
+
+    // --- Текстура земли для фона ---
+    private static BufferedImage groundTexture = null;
+    private static final int GROUND_TEXTURE_SIZE = 64;
+
+    // --- Иконка пятнашек для маркера ---
+    private static BufferedImage fifteenPuzzleIcon = null;
+
+    static {
+        // Земля
+        try (InputStream in = WormMapPanel.class.getResourceAsStream("/images/ground.png")) {
+            if (in != null) {
+                BufferedImage orig = ImageIO.read(in);
+                if (orig != null) {
+                    groundTexture = resizeTexture(orig, GROUND_TEXTURE_SIZE, GROUND_TEXTURE_SIZE);
+                }
+            }
+        } catch (Exception e) {
+            groundTexture = null;
+        }
+        // Иконка пятнашек
+        try (InputStream in = WormMapPanel.class.getResourceAsStream("/images/FifteenPuzzle/FifteenPuzzleIcon.png")) {
+            if (in != null) {
+                fifteenPuzzleIcon = ImageIO.read(in);
+            }
+        } catch (Exception e) {
+            fifteenPuzzleIcon = null;
+        }
+    }
+
+    private static BufferedImage resizeTexture(BufferedImage img, int targetW, int targetH) {
+        Image scaled = img.getScaledInstance(targetW, targetH, Image.SCALE_SMOOTH);
+        BufferedImage small = new BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = small.createGraphics();
+        g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.drawImage(scaled, 0, 0, null);
+        g2.dispose();
+        return small;
+    }
 
     public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame) {
         this.worm = worm;
@@ -95,8 +139,9 @@ public class WormMapPanel extends JPanel {
 
         setDoubleBuffered(true);
 
+        // Только пятнашки!
         mapModel.addMarker(new EventMarker(200, 200, "Пятнашки"));
-        mapModel.addMarker(new EventMarker(300, 300, "Событие 2"));
+        // mapModel.addMarker(new EventMarker(300, 300, "Событие 2")); // убрал второй ивент
 
         SwingUtilities.invokeLater(this::requestFocusInWindow);
     }
@@ -123,17 +168,36 @@ public class WormMapPanel extends JPanel {
             SwingUtilities.invokeLater(() -> {
                 FifteenPuzzleFrame puzzleFrame = new FifteenPuzzleFrame();
                 JDialog dialog = new JDialog(ownerFrame, "Пятнашки", true);
-                dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                puzzleFrame.setParentDialog(dialog);
+
+                dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE); // <--- Важно!
                 dialog.setContentPane(puzzleFrame.getContentPane());
                 dialog.setSize(puzzleFrame.getPreferredSize());
+                dialog.setResizable(false);
                 dialog.setLocationRelativeTo(ownerFrame);
+
                 dialog.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        int confirm = JOptionPane.showConfirmDialog(
+                                dialog,
+                                "Вы уверены, что хотите выйти из пятнашек?\nПрогресс будет потерян.",
+                                "Подтвердите выход",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.WARNING_MESSAGE
+                        );
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            dialog.dispose();
+                        }
+                        // Если NO — ничего не делаем, окно не закроется
+                    }
                     @Override
                     public void windowClosed(WindowEvent e) {
                         paused = false;
                         requestFocusInWindow();
                     }
                 });
+
                 dialog.setVisible(true);
             });
         }
@@ -156,7 +220,7 @@ public class WormMapPanel extends JPanel {
 
         for (EventMarker marker : mapModel.getMarkers()) {
             double dist = WormMover.distance(worm.getX(), worm.getY(), marker.getX(), marker.getY());
-            boolean inside = dist < 20;
+            boolean inside = dist < 40;
 
             if (inside) {
                 if (!activeMarkers.contains(marker) &&
@@ -181,11 +245,19 @@ public class WormMapPanel extends JPanel {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g.create();
 
-        g2d.setColor(new Color(120, 120, 120));
-        g2d.fillRect(0, 0, FIELD_WIDTH, FIELD_HEIGHT);
-
-        g2d.setColor(Color.LIGHT_GRAY);
-        g2d.fillRect(0, 0, FIELD_WIDTH, FIELD_HEIGHT);
+        // Фон из земли (тайл)
+        if (groundTexture != null) {
+            int texW = groundTexture.getWidth();
+            int texH = groundTexture.getHeight();
+            for (int y = 0; y < FIELD_HEIGHT; y += texH) {
+                for (int x = 0; x < FIELD_WIDTH; x += texW) {
+                    g2d.drawImage(groundTexture, x, y, this);
+                }
+            }
+        } else {
+            g2d.setColor(new Color(120, 120, 120));
+            g2d.fillRect(0, 0, FIELD_WIDTH, FIELD_HEIGHT);
+        }
 
         g2d.setColor(Color.DARK_GRAY);
         g2d.setStroke(new BasicStroke(4));
@@ -195,10 +267,32 @@ public class WormMapPanel extends JPanel {
         drawTarget(g2d, targetX, targetY);
 
         for (EventMarker marker : mapModel.getMarkers()) {
-            drawMarker(g2d, marker);
+            if ("Пятнашки".equals(marker.getDescription())) {
+                drawFifteenPuzzleIcon(g2d, marker);
+            } else {
+                drawMarker(g2d, marker);
+            }
         }
 
         g2d.dispose();
+    }
+
+    private void drawFifteenPuzzleIcon(Graphics2D g, EventMarker marker) {
+        // Большая прозрачная зона действия
+        int zoneRadius = 40; // радиус зоны действия
+        g.setColor(new Color(100, 200, 255, 60));
+        int zoneX = marker.getX() - zoneRadius;
+        int zoneY = marker.getY() - zoneRadius;
+        g.fillOval(zoneX, zoneY, zoneRadius * 2, zoneRadius * 2);
+
+        if (fifteenPuzzleIcon == null) {
+            drawMarker(g, marker);
+            return;
+        }
+        int size = 72; // крупная иконка
+        int x = marker.getX() - size / 2 +2;
+        int y = marker.getY() - size / 2 + 5;
+        g.drawImage(fifteenPuzzleIcon, x, y, size, size, null);
     }
 
     private void drawWorm(Graphics2D g, int x, int y, double direction) {
