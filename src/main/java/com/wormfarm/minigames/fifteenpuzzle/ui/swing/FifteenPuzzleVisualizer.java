@@ -216,7 +216,7 @@ public class FifteenPuzzleVisualizer extends JPanel {
 
     // Анимация "дрожи"
     public void animateShake(int value) {
-        final int shakeDistance = 3; // пикселей
+        final int shakeDistance = 1; // пикселей
         final int shakeFrames = 8;
         final int[] shakePattern = {+1, -2, +2, -2, +2, -1, 0, 0};
 

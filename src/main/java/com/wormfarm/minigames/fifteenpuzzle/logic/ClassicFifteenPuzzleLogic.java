@@ -119,14 +119,14 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
         return (Math.abs(emptyX - x) + Math.abs(emptyY - y)) == 1;
     }
 
-    private int getEmptyX() {
+    protected int getEmptyX() {
         for (int i = 0; i < size; i++)
             for (int j = 0; j < size; j++)
                 if (board[i][j] == 0) return i;
         throw new IllegalStateException("Empty tile not found");
     }
 
-    private int getEmptyY() {
+    protected int getEmptyY() {
         for (int i = 0; i < size; i++)
             for (int j = 0; j < size; j++)
                 if (board[i][j] == 0) return j;
@@ -164,9 +164,10 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
         fireWinEvent();
     }
 
-    @Override
     public void addEventListener(PuzzleEventListener listener) {
-        listeners.add(listener);
+        if (!listeners.contains(listener)) {
+            listeners.add(listener);
+        }
     }
 
     @Override
