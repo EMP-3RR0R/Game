@@ -34,7 +34,8 @@ public class FifteenPuzzleController {
                     if (moved) {
                         SoundUtils.playSound("/sounds/click.wav");
                         // Найти, какой тайл сдвинулся и куда
-                        outer: for (int r = 0; r < game.getSize(); r++) {
+                        outer:
+                        for (int r = 0; r < game.getSize(); r++) {
                             for (int c = 0; c < game.getSize(); c++) {
                                 if (before[r][c] != 0 && after[r][c] == 0) {
                                     int value = before[r][c];
@@ -72,49 +73,52 @@ public class FifteenPuzzleController {
             @Override
             public void onWin() {
                 gameOver = true;
-                SwingUtilities.invokeLater(() -> {
-                    int moves = 0;
-                    long ms = 0;
-                    if (game instanceof ClassicFifteenPuzzleLogic) {
-                        moves = ((ClassicFifteenPuzzleLogic) game).getMoveCount();
-                        ms = ((ClassicFifteenPuzzleLogic) game).getElapsedTimeMillis();
-                    }
-                    long sec = ms / 1000;
-                    long min = sec / 60;
-                    sec = sec % 60;
-                    String stats = String.format("Ходы: %d\nВремя: %02d:%02d", moves, min, sec);
-
-                    SoundUtils.playSound("/sounds/win.wav");
-
-                    Object[] options = {"Сыграть ещё!", "Вернуться к приключениям!"};
-                    int choice = JOptionPane.showOptionDialog(
-                            parentComponent,
-                            "<html>Вы победили!<br><br><pre>" + stats + "</pre></html>",
-                            "Пятнашки",
-                            JOptionPane.DEFAULT_OPTION,
-                            JOptionPane.INFORMATION_MESSAGE,
-                            null,
-                            options,
-                            options[0]
-                    );
-                    if (choice == 0) {
-                        // Сыграть ещё: новая доска и новый спрайт!
-                        game.resetBoard();
-                        if (visualizer != null) {
-                            visualizer.resetPuzzleImage();
-                            visualizer.setBoard(game.getBoardCopy());
-                            visualizer.repaint();
-                        }
-                        gameOver = false;
-                    } else if (choice == 1) {
-                        // Вернуться к приключениям: закрыть JDialog через Frame
-                        if (parentComponent instanceof FifteenPuzzleFrame) {
-                            JDialog dlg = ((FifteenPuzzleFrame) parentComponent).getParentDialog();
-                            if (dlg != null) dlg.dispose();
-                        }
-                    }
-                });
+                SwingUtilities.invokeLater(FifteenPuzzleController.this::handleWinOnEdt);
             }
         });
+    }
+
+    // Новый package-private метод для обработки победы на EDT.
+    void handleWinOnEdt() {
+        int moves = 0;
+        long ms = 0;
+        if (game instanceof ClassicFifteenPuzzleLogic) {
+            moves = ((ClassicFifteenPuzzleLogic) game).getMoveCount();
+            ms = ((ClassicFifteenPuzzleLogic) game).getElapsedTimeMillis();
+        }
+        long sec = ms / 1000;
+        long min = sec / 60;
+        sec = sec % 60;
+        String stats = String.format("Ходы: %d\nВремя: %02d:%02d", moves, min, sec);
+
+        SoundUtils.playSound("/sounds/win.wav");
+
+        Object[] options = {"Сыграть ещё!", "Вернуться к приключениям!"};
+        int choice = JOptionPane.showOptionDialog(
+                parentComponent,
+                "<html>Вы победили!<br><br><pre>" + stats + "</pre></html>",
+                "Пятнашки",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+        if (choice == 0) {
+            // Сыграть ещё: новая доска и новый спрайт!
+            game.resetBoard();
+            if (visualizer != null) {
+                visualizer.resetPuzzleImage();
+                visualizer.setBoard(game.getBoardCopy());
+                visualizer.repaint();
+            }
+            gameOver = false;
+        } else if (choice == 1) {
+            // Вернуться к приключениям: закрыть JDialog через Frame
+            if (parentComponent instanceof FifteenPuzzleFrame) {
+                JDialog dlg = ((FifteenPuzzleFrame) parentComponent).getParentDialog();
+                if (dlg != null) dlg.dispose();
+            }
+        }
     }
 }
