@@ -49,6 +49,15 @@ public class PauseMenuDialog extends JDialog {
         add(btnSave, gbc);
 
         gbc.gridy++;
+        JButton btnSettings = new JButton("Настройки");
+        btnSettings.setPreferredSize(new Dimension(220, 36));
+        btnSettings.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Настройки пока недоступны.", "Заглушка", JOptionPane.INFORMATION_MESSAGE);
+        });
+        add(btnSettings, gbc);
+
+
+        gbc.gridy++;
         JButton btnExitToMenu = new JButton("Выход в меню");
         btnExitToMenu.setPreferredSize(new Dimension(220, 36));
         btnExitToMenu.addActionListener(e -> {
