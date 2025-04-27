@@ -1,13 +1,22 @@
 package com.wormfarm.gui.frame;
 
-import com.wormfarm.gui.panel.WormMapPanel;
-import com.wormfarm.core.model.WormState;
+import com.wormfarm.core.logic.WormSaveManager;
 import com.wormfarm.core.model.EventMapModel;
+import com.wormfarm.core.model.WormState;
+import com.wormfarm.core.model.WormStats;
+import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.gui.dialog.LoadGameDialog;
+import com.wormfarm.gui.panel.MainMenuPanel;
+import com.wormfarm.gui.panel.WormMapPanel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ResourceBundle;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
+import java.util.ResourceBundle;
 
 public class MainApplicationFrame extends JFrame {
     public static final int MAP_WIDTH = 800;
@@ -16,18 +25,32 @@ public class MainApplicationFrame extends JFrame {
     protected final JDesktopPane desktopPane = new JDesktopPane();
     protected ResourceBundle messages;
 
+    private WormState currentWormState;
+    private WormStats currentWormStats;
+    private EventMapModel currentEventMap;
+    private WormMapPanel currentMapPanel;
+
     public MainApplicationFrame() {
         messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", Locale.getDefault());
 
         setTitle("Worm Game");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-        // Основная панель с червём и картой
-        WormState worm = new WormState(100, 100, 0);
-        EventMapModel eventMap = new EventMapModel();
-        WormMapPanel mapPanel = new WormMapPanel(worm, eventMap, this); // Передаём ссылку на JFrame
-
-        setContentPane(mapPanel);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                int result = JOptionPane.showConfirmDialog(
+                        MainApplicationFrame.this,
+                        messages.getString("confirm.close.message"),
+                        messages.getString("confirm.close.title"),
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE
+                );
+                if (result == JOptionPane.YES_OPTION) {
+                    dispose();
+                }
+            }
+        });
 
         setJMenuBar(createMenuBar());
         setResizable(false);
@@ -36,11 +59,116 @@ public class MainApplicationFrame extends JFrame {
         setMaximumSize(new Dimension(MAP_WIDTH, MAP_HEIGHT));
         pack();
         setLocationRelativeTo(null);
+
+        showMainMenu();
+    }
+
+    public void showMainMenu() {
+        setContentPane(new MainMenuPanel(
+                this::continueGame,
+                this::startNewGame,
+                this::loadGame,
+                this::openSettings,
+                this::exitGame
+        ));
+        revalidate();
+        repaint();
+    }
+
+    public void startNewGame() {
+        currentWormState = new WormState(100, 100, 0);
+        currentEventMap = new EventMapModel();
+        currentWormStats = new WormStats(0);
+
+        WormStatsManager statsManager = new WormStatsManager(currentWormStats);
+
+        currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager);
+        currentMapPanel.setOnExitToMenu(this::showMainMenu);
+
+        setContentPane(currentMapPanel);
+        revalidate();
+        repaint();
+        currentMapPanel.requestFocusInWindow();
+    }
+
+    public void continueGame() {
+        if (currentWormState != null && currentWormStats != null) {
+            WormStatsManager statsManager = new WormStatsManager(currentWormStats);
+
+            currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager);
+            currentMapPanel.setOnExitToMenu(this::showMainMenu);
+
+            setContentPane(currentMapPanel);
+            revalidate();
+            repaint();
+            currentMapPanel.requestFocusInWindow();
+        } else {
+            List<String> saves = WormSaveManager.listSaves();
+            if (saves.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Нет сохранений для продолжения.");
+                return;
+            }
+            loadSpecificGame(saves.get(saves.size() - 1)); // последнее сохранение
+        }
+    }
+
+    public void loadGame() {
+        List<String> saves = WormSaveManager.listSaves();
+        if (saves.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Нет доступных сохранений.");
+            return;
+        }
+
+        LoadGameDialog dialog = new LoadGameDialog(this, saves);
+        dialog.setVisible(true);
+
+        String selectedName = dialog.getSelectedName();
+        if (selectedName != null) {
+            loadSpecificGame(selectedName);
+        }
+    }
+
+    private void loadSpecificGame(String saveName) {
+        try {
+            currentWormState = new WormState(100, 100, 0);
+            currentEventMap = new EventMapModel();
+            currentWormStats = new WormStats(0);
+
+            WormSaveManager.load(currentWormState, currentWormStats, saveName);
+
+            WormStatsManager statsManager = new WormStatsManager(currentWormStats);
+
+            currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager);
+            currentMapPanel.setOnExitToMenu(this::showMainMenu);
+
+            setContentPane(currentMapPanel);
+            revalidate();
+            repaint();
+            currentMapPanel.requestFocusInWindow();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Ошибка загрузки сохранения: " + e.getMessage());
+        }
+    }
+
+    public void openSettings() {
+        JOptionPane.showMessageDialog(this, "Настройки пока недоступны!", "Настройки", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void exitGame() {
+        System.exit(0);
     }
 
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-        // Добавь пункты меню, если нужно
         return menuBar;
+    }
+
+    @Override
+    public void dispose() {
+        if (currentMapPanel != null) {
+            currentMapPanel.dispose();
+        }
+        super.dispose();
     }
 }

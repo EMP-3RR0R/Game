@@ -1,5 +1,7 @@
 package com.wormfarm.minigames.fifteenpuzzle.ui.swing;
 
+import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.core.model.WormStats;
 import com.wormfarm.minigames.fifteenpuzzle.logic.ClassicFifteenPuzzleLogic;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
@@ -17,6 +19,8 @@ class FifteenPuzzleControllerTest {
     ClassicFifteenPuzzleLogic logic;
     FifteenPuzzleVisualizer visualizer;
     JPanel parent;
+    WormStats stats;
+    WormStatsManager statsManager;
     FifteenPuzzleController controller;
 
     @BeforeEach
@@ -24,7 +28,9 @@ class FifteenPuzzleControllerTest {
         logic = spy(new ClassicFifteenPuzzleLogic(4));
         visualizer = spy(new FifteenPuzzleVisualizer(4, 50, logic));
         parent = new JPanel();
-        controller = new FifteenPuzzleController(logic, visualizer, parent);
+        stats = new WormStats(0);
+        statsManager = spy(new WormStatsManager(stats));
+        controller = new FifteenPuzzleController(logic, visualizer, parent, statsManager);
     }
 
     /** Вспомогательная функция для прямой подмены содержимого доски */
@@ -130,12 +136,14 @@ class FifteenPuzzleControllerTest {
     }
 
     @Test
-    void testHandleWinOnEdt_StartsDialogAndHandlesPlayAgain() {
+    void testHandleWinOnEdt_StartsDialogAndHandlesPlayAgainAndIncrementsCoins() {
         ClassicFifteenPuzzleLogic logic = spy(new ClassicFifteenPuzzleLogic(4));
         FifteenPuzzleVisualizer visualizer = spy(new FifteenPuzzleVisualizer(4, 50, logic));
         visualizer.setSize(200, 200);
         JPanel parent = new JPanel();
-        FifteenPuzzleController controller = new FifteenPuzzleController(logic, visualizer, parent);
+        WormStats stats = new WormStats(0);
+        WormStatsManager statsManager = spy(new WormStatsManager(stats));
+        FifteenPuzzleController controller = new FifteenPuzzleController(logic, visualizer, parent, statsManager);
 
         try (var mockedSound = Mockito.mockStatic(SoundUtils.class);
              var mockedOptionPane = Mockito.mockStatic(JOptionPane.class)) {
@@ -148,11 +156,13 @@ class FifteenPuzzleControllerTest {
             verify(visualizer, atLeastOnce()).resetPuzzleImage();
             verify(visualizer, atLeastOnce()).setBoard(any(int[][].class));
             verify(visualizer, atLeastOnce()).repaint();
+            verify(statsManager, atLeastOnce()).addCoins(10);
+            assertEquals(10, stats.getWormCoins());
         }
     }
 
     @Test
-    void testHandleWinOnEdt_HandlesReturnToAdventureAndClosesDialog() {
+    void testHandleWinOnEdt_HandlesReturnToAdventureAndClosesDialogAndIncrementsCoins() {
         JDialog dlg = mock(JDialog.class);
         FifteenPuzzleFrame frame = mock(FifteenPuzzleFrame.class);
         when(frame.getParentDialog()).thenReturn(dlg);
@@ -160,7 +170,9 @@ class FifteenPuzzleControllerTest {
         ClassicFifteenPuzzleLogic logic = spy(new ClassicFifteenPuzzleLogic(4));
         FifteenPuzzleVisualizer visualizer = spy(new FifteenPuzzleVisualizer(4, 50, logic));
         visualizer.setSize(200, 200);
-        FifteenPuzzleController ctrl = new FifteenPuzzleController(logic, visualizer, frame);
+        WormStats stats = new WormStats(0);
+        WormStatsManager statsManager = spy(new WormStatsManager(stats));
+        FifteenPuzzleController ctrl = new FifteenPuzzleController(logic, visualizer, frame, statsManager);
 
         try (var mockedSound = Mockito.mockStatic(SoundUtils.class);
              var mockedOptionPane = Mockito.mockStatic(JOptionPane.class)) {
@@ -168,6 +180,8 @@ class FifteenPuzzleControllerTest {
                     .thenReturn(1); // "Вернуться к приключениям!"
             ctrl.handleWinOnEdt();
             verify(dlg).dispose();
+            verify(statsManager, atLeastOnce()).addCoins(10);
+            assertEquals(10, stats.getWormCoins());
         }
     }
 
@@ -176,7 +190,8 @@ class FifteenPuzzleControllerTest {
         ClassicFifteenPuzzleLogic logic = new ClassicFifteenPuzzleLogic(4);
         FifteenPuzzleVisualizer visualizer = spy(new FifteenPuzzleVisualizer(4, 50, logic));
         JPanel parent = new JPanel();
-        FifteenPuzzleController ctrl = new FifteenPuzzleController(logic, visualizer, parent);
+        WormStatsManager statsManager = mock(WormStatsManager.class);
+        FifteenPuzzleController ctrl = new FifteenPuzzleController(logic, visualizer, parent, statsManager);
 
         // Ищем listener в logic
         com.wormfarm.minigames.fifteenpuzzle.events.PuzzleEventListener listener = null;

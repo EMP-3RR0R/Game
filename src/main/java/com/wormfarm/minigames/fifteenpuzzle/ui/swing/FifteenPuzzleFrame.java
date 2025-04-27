@@ -1,6 +1,8 @@
 package com.wormfarm.minigames.fifteenpuzzle.ui.swing;
 
 import com.wormfarm.minigames.fifteenpuzzle.logic.ClassicFifteenPuzzleLogic;
+import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.core.model.WormStats;
 import com.wormfarm.gui.base.BaseInternalFrame;
 
 import javax.swing.*;
@@ -22,14 +24,20 @@ public class FifteenPuzzleFrame extends BaseInternalFrame {
     private final JLabel movesLabel = new JLabel("Ходы: 0");
     private final Timer uiTimer;
 
-    public FifteenPuzzleFrame() {
+    // --- Новое поле для менеджера статистики ---
+    private final WormStatsManager wormStatsManager;
+
+    // --- Новый конструктор, позволяющий передавать WormStatsManager извне ---
+    public FifteenPuzzleFrame(WormStatsManager wormStatsManager) {
         super("puzzle.title", true, true, true, true);
+
+        this.wormStatsManager = wormStatsManager;
 
         setLayout(new BorderLayout());
 
         logic = new ClassicFifteenPuzzleLogic(SIZE);
         visualizer = new FifteenPuzzleVisualizer(SIZE, TILE_SIZE, logic);
-        controller = new FifteenPuzzleController(logic, visualizer, this);
+        controller = new FifteenPuzzleController(logic, visualizer, this, wormStatsManager);
 
         // Панель с таймером и ходами
         JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -80,6 +88,13 @@ public class FifteenPuzzleFrame extends BaseInternalFrame {
             }
         });
         uiTimer.start();
+    }
+
+    // Оставляем старый конструктор для обратной совместимости,
+    // но он будет создавать временный менеджер (монеты не сохранятся!) —
+    // в реальном приложении лучше всегда использовать новый конструктор!
+    public FifteenPuzzleFrame() {
+        this(new WormStatsManager(new WormStats(0)));
     }
 
     private void updateInfo() {

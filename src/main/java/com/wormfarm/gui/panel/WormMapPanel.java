@@ -4,19 +4,13 @@ import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.model.EventMarker;
 import com.wormfarm.core.model.EventMapModel;
 import com.wormfarm.core.logic.WormMover;
-import com.wormfarm.gui.frame.MainApplicationFrame;
+import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.core.logic.WormSaveManager;
 import com.wormfarm.minigames.fifteenpuzzle.ui.swing.FifteenPuzzleFrame;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Image;
+import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
@@ -27,12 +21,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class WormMapPanel extends JPanel {
-    public static final int FIELD_WIDTH = MainApplicationFrame.MAP_HEIGHT-16;
-    public static final int FIELD_HEIGHT = MainApplicationFrame.MAP_HEIGHT-43;
+    public static final int FIELD_WIDTH = 800 - 16;
+    public static final int FIELD_HEIGHT = 800 - 43;
 
     private final WormState worm;
     private final EventMapModel mapModel;
     private final JFrame ownerFrame;
+    private final WormStatsManager statsManager;
     private volatile int targetX = 150;
     private volatile int targetY = 100;
 
@@ -49,6 +44,16 @@ public class WormMapPanel extends JPanel {
 
     // --- Иконка пятнашек для маркера ---
     private static BufferedImage fifteenPuzzleIcon = null;
+
+    // --- Иконка WormCoin для счётчика ---
+    private static BufferedImage wormCoinIcon = null;
+    private static final int WORMCOIN_ICON_SIZE = 32;
+
+    // --- Колбэк для выхода в главное меню ---
+    private Runnable onExitToMenu = null;
+    public void setOnExitToMenu(Runnable onExitToMenu) {
+        this.onExitToMenu = onExitToMenu;
+    }
 
     static {
         // Земля
@@ -70,6 +75,17 @@ public class WormMapPanel extends JPanel {
         } catch (Exception e) {
             fifteenPuzzleIcon = null;
         }
+        // Иконка WormCoin (ищет WormCoinIcon.png, если нужно другое имя - поправь)
+        try (InputStream in = WormMapPanel.class.getResourceAsStream("/images/WormCoinIcon.png")) {
+            if (in != null) {
+                BufferedImage orig = ImageIO.read(in);
+                if (orig != null) {
+                    wormCoinIcon = resizeTexture(orig, WORMCOIN_ICON_SIZE, WORMCOIN_ICON_SIZE);
+                }
+            }
+        } catch (Exception e) {
+            wormCoinIcon = null;
+        }
     }
 
     private static BufferedImage resizeTexture(BufferedImage img, int targetW, int targetH) {
@@ -82,10 +98,11 @@ public class WormMapPanel extends JPanel {
         return small;
     }
 
-    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame) {
+    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame, WormStatsManager statsManager) {
         this.worm = worm;
         this.mapModel = mapModel;
         this.ownerFrame = ownerFrame;
+        this.statsManager = statsManager;
 
         setPreferredSize(new Dimension(FIELD_WIDTH, FIELD_HEIGHT));
         setFocusable(true);
@@ -141,9 +158,29 @@ public class WormMapPanel extends JPanel {
 
         // Только пятнашки!
         mapModel.addMarker(new EventMarker(200, 200, "Пятнашки"));
-        // mapModel.addMarker(new EventMarker(300, 300, "Событие 2")); // убрал второй ивент
+
+        // Обработка ESC для меню паузы
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke("ESCAPE"), "showPauseMenu");
+        getActionMap().put("showPauseMenu", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showPauseMenu();
+            }
+        });
 
         SwingUtilities.invokeLater(this::requestFocusInWindow);
+    }
+
+    // Старый конструктор для обратной совместимости
+    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame) {
+        this(worm, mapModel, ownerFrame, null);
+    }
+
+    /** Останавливает таймеры, чтобы не оставлять живых потоков после закрытия окна */
+    public void dispose() {
+        timerRedraw.stop();
+        timerModel.stop();
     }
 
     private void tryActivateEvent(EventMarker marker) {
@@ -166,11 +203,13 @@ public class WormMapPanel extends JPanel {
         if (marker.getDescription().equals("Пятнашки")) {
             paused = true;
             SwingUtilities.invokeLater(() -> {
-                FifteenPuzzleFrame puzzleFrame = new FifteenPuzzleFrame();
+                FifteenPuzzleFrame puzzleFrame = (statsManager != null)
+                        ? new FifteenPuzzleFrame(statsManager)
+                        : new FifteenPuzzleFrame();
                 JDialog dialog = new JDialog(ownerFrame, "Пятнашки", true);
                 puzzleFrame.setParentDialog(dialog);
 
-                dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE); // <--- Важно!
+                dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
                 dialog.setContentPane(puzzleFrame.getContentPane());
                 dialog.setSize(puzzleFrame.getPreferredSize());
                 dialog.setResizable(false);
@@ -189,7 +228,6 @@ public class WormMapPanel extends JPanel {
                         if (confirm == JOptionPane.YES_OPTION) {
                             dialog.dispose();
                         }
-                        // Если NO — ничего не делаем, окно не закроется
                     }
                     @Override
                     public void windowClosed(WindowEvent e) {
@@ -274,7 +312,58 @@ public class WormMapPanel extends JPanel {
             }
         }
 
+        // --- Рисуем счетчик WormCoin'ов в правом верхнем углу ---
+        drawWormCoinCounter(g2d);
+
         g2d.dispose();
+    }
+
+    /** Рисует счетчик WormCoin'ов в правом верхнем углу */
+    private void drawWormCoinCounter(Graphics2D g2d) {
+        if (statsManager == null) return;
+
+        final int padding = 12;
+        final int iconSize = WORMCOIN_ICON_SIZE;
+        int coins = statsManager.getCoins();
+
+        // Шрифт для числа (достаточно крупный)
+        Font font = new Font("Arial", Font.BOLD, 22);
+        g2d.setFont(font);
+        FontMetrics fm = g2d.getFontMetrics();
+
+        String coinText = String.valueOf(coins);
+        int textWidth = fm.stringWidth(coinText);
+
+        // Общая ширина: иконка + пробел + текст + паддинги
+        int totalWidth = iconSize + 8 + textWidth + 2*padding;
+        int height = Math.max(iconSize, fm.getHeight()) + padding;
+
+        // Координаты: прижат к правому верхнему углу с учетом ширины
+        int x = FIELD_WIDTH - totalWidth;
+        int y = padding;
+
+        // Фон (полупрозрачный прямоугольник)
+        g2d.setColor(new Color(255,255,255,200));
+        g2d.fillRoundRect(x, y, totalWidth, height, 18, 18);
+
+        // Окантовка
+        g2d.setColor(new Color(200,200,200, 225));
+        g2d.setStroke(new BasicStroke(2));
+        g2d.drawRoundRect(x, y, totalWidth, height, 18, 18);
+
+        // Иконка WormCoin (слева)
+        if (wormCoinIcon != null) {
+            g2d.drawImage(wormCoinIcon, x + padding, y + (height-iconSize)/2, iconSize, iconSize, null);
+        } else {
+            // Если нет иконки, нарисуем кружочек
+            g2d.setColor(Color.YELLOW);
+            g2d.fillOval(x + padding, y + (height-iconSize)/2, iconSize, iconSize);
+        }
+
+        // Число WormCoin'ов (справа от иконки)
+        g2d.setColor(new Color(30, 30, 30));
+        int textY = y + (height + fm.getAscent() - fm.getDescent())/2 - 2;
+        g2d.drawString(coinText, x + padding + iconSize + 8, textY);
     }
 
     private void drawFifteenPuzzleIcon(Graphics2D g, EventMarker marker) {
@@ -315,5 +404,54 @@ public class WormMapPanel extends JPanel {
         g.fillRect(marker.getX() - 10, marker.getY() - 10, 20, 20);
         g.setColor(Color.BLACK);
         g.drawRect(marker.getX() - 10, marker.getY() - 10, 20, 20);
+    }
+
+    private void showPauseMenu() {
+        JFrame owner = (JFrame) SwingUtilities.getWindowAncestor(this);
+        com.wormfarm.gui.dialog.PauseMenuDialog dlg = new com.wormfarm.gui.dialog.PauseMenuDialog(
+                owner,
+                this::requestFocusInWindow,
+                () -> { if (onExitToMenu != null) onExitToMenu.run(); },
+                () -> System.exit(0),
+                this::saveGameWithName,
+                this::loadGameWithName,
+                !com.wormfarm.core.logic.WormSaveManager.listSaves().isEmpty()
+        );
+        dlg.setVisible(true);
+    }
+
+    private void saveGameWithName() {
+        java.util.List<String> saves = com.wormfarm.core.logic.WormSaveManager.listSaves();
+        com.wormfarm.gui.dialog.SaveGameDialog dlg = new com.wormfarm.gui.dialog.SaveGameDialog((JFrame) SwingUtilities.getWindowAncestor(this), saves);
+        dlg.setVisible(true);
+        String saveName = dlg.getSelectedName();
+        if (saveName != null) {
+            try {
+                com.wormfarm.core.logic.WormSaveManager.save(worm, statsManager.getStats(), saveName);
+                JOptionPane.showMessageDialog(this, "Игра сохранена как '" + saveName + "'!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Ошибка сохранения: " + ex.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void loadGameWithName() {
+        java.util.List<String> saves = com.wormfarm.core.logic.WormSaveManager.listSaves();
+        if (saves.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Нет сохранений для загрузки!");
+            return;
+        }
+        com.wormfarm.gui.dialog.LoadGameDialog dlg = new com.wormfarm.gui.dialog.LoadGameDialog((JFrame) SwingUtilities.getWindowAncestor(this), saves);
+        dlg.setVisible(true);
+        String saveName = dlg.getSelectedName();
+        if (saveName != null) {
+            try {
+                com.wormfarm.core.logic.WormSaveManager.load(worm, statsManager.getStats(), saveName);
+                JOptionPane.showMessageDialog(this, "Игра '" + saveName + "' загружена!");
+                repaint();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Ошибка загрузки: " + ex.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 }

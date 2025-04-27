@@ -3,6 +3,7 @@ package com.wormfarm.minigames.fifteenpuzzle.ui.swing;
 import com.wormfarm.minigames.fifteenpuzzle.api.FifteenPuzzleGame;
 import com.wormfarm.minigames.fifteenpuzzle.events.PuzzleEventListener;
 import com.wormfarm.minigames.fifteenpuzzle.logic.ClassicFifteenPuzzleLogic;
+import com.wormfarm.core.logic.WormStatsManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,12 +14,14 @@ public class FifteenPuzzleController {
     private final FifteenPuzzleGame game;
     private final FifteenPuzzleVisualizer visualizer;
     private final Component parentComponent;
+    private final WormStatsManager wormStatsManager;
     private boolean gameOver = false;
 
-    public FifteenPuzzleController(FifteenPuzzleGame game, FifteenPuzzleVisualizer visualizer, Component parentComponent) {
+    public FifteenPuzzleController(FifteenPuzzleGame game, FifteenPuzzleVisualizer visualizer, Component parentComponent, WormStatsManager wormStatsManager) {
         this.game = game;
         this.visualizer = visualizer;
         this.parentComponent = parentComponent;
+        this.wormStatsManager = wormStatsManager;
 
         visualizer.addMouseListener(new MouseAdapter() {
             @Override
@@ -80,6 +83,10 @@ public class FifteenPuzzleController {
 
     // Новый package-private метод для обработки победы на EDT.
     void handleWinOnEdt() {
+        if (wormStatsManager != null) {
+            wormStatsManager.addCoins(10);
+        }
+
         int moves = 0;
         long ms = 0;
         if (game instanceof ClassicFifteenPuzzleLogic) {
