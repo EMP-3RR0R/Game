@@ -17,7 +17,6 @@ class FifteenPuzzleFrameTest {
 
     @BeforeEach
     void setUp() {
-        // Для Swing-тестов запускаем в EDT
         try {
             SwingUtilities.invokeAndWait(() -> frame = new FifteenPuzzleFrame());
         } catch (Exception e) {
@@ -41,7 +40,6 @@ class FifteenPuzzleFrameTest {
         assertEquals(new Dimension(420, 520), frame.getMinimumSize());
         assertEquals(new Dimension(420, 520), frame.getMaximumSize());
 
-        // Проверяем наличие визуализатора и контроллера (reflection)
         assertNotNull(getField(frame, "visualizer"));
         assertNotNull(getField(frame, "controller"));
         assertNotNull(getField(frame, "logic"));
@@ -52,12 +50,10 @@ class FifteenPuzzleFrameTest {
         JLabel timerLabel = (JLabel) getField(frame, "timerLabel");
         JLabel movesLabel = (JLabel) getField(frame, "movesLabel");
 
-        // Принудительно вызываем updateInfo()
         var updateInfo = frame.getClass().getDeclaredMethod("updateInfo");
         updateInfo.setAccessible(true);
         updateInfo.invoke(frame);
 
-        // Текст должен быть в формате времени и ходов
         assertTrue(timerLabel.getText().startsWith("Время: "));
         assertTrue(movesLabel.getText().matches("Ходы: \\d+"));
     }
@@ -68,16 +64,13 @@ class FifteenPuzzleFrameTest {
         assertNotNull(resetButton);
         ClassicFifteenPuzzleLogic logic = (ClassicFifteenPuzzleLogic) getField(frame, "logic");
 
-        // Совершаем ход, чтобы были изменения
         logic.moveTile(3,2);
 
-        // Нажимаем сброс
         SwingUtilities.invokeAndWait(resetButton::doClick);
 
-        // Ожидаем сброса ходов и обновления меток
         JLabel movesLabel = (JLabel) getField(frame, "movesLabel");
         assertEquals("Ходы: 0", movesLabel.getText());
-        assertFalse(logic.isSolved()); // после сброса обычно не решено
+        assertFalse(logic.isSolved());
     }
 
     @Test
@@ -102,11 +95,9 @@ class FifteenPuzzleFrameTest {
         JButton resetButton = findButton(frame, "Сброс");
         JButton solveButton = findButton(frame, "Решить автоматически");
 
-        // Мокаем методы для проверки вызовов
         FifteenPuzzleVisualizer spyVis = Mockito.spy(visualizer);
         setField(frame, "visualizer", spyVis);
 
-        // Повторно добавляем в панель (иначе кнопки вызовут методы на старом объекте)
         frame.remove(visualizer);
         frame.add(spyVis, BorderLayout.CENTER);
 
@@ -124,11 +115,9 @@ class FifteenPuzzleFrameTest {
     void testTimerRunsAndUpdatesUI() throws Exception {
         Timer uiTimer = (Timer) getField(frame, "uiTimer");
         assertTrue(uiTimer.isRunning());
-        // Принудительно вызываем ActionListener
         for (ActionListener l : uiTimer.getActionListeners()) {
             l.actionPerformed(new java.awt.event.ActionEvent(frame, ActionEvent.ACTION_PERFORMED, "test"));
         }
-        // Проверяем что метки времени обновились
         JLabel timerLabel = (JLabel) getField(frame, "timerLabel");
         assertTrue(timerLabel.getText().startsWith("Время: "));
     }
@@ -152,9 +141,6 @@ class FifteenPuzzleFrameTest {
         assertFalse(frame.isDisplayable());
     }
 
-    // ----------------- Вспомогательные методы -----------------
-
-    /** Получить приватное поле по имени */
     private Object getField(Object obj, String name) {
         try {
             var f = obj.getClass().getDeclaredField(name);
@@ -165,7 +151,6 @@ class FifteenPuzzleFrameTest {
         }
     }
 
-    /** Установить приватное поле */
     private void setField(Object obj, String name, Object value) {
         try {
             var f = obj.getClass().getDeclaredField(name);
@@ -176,7 +161,6 @@ class FifteenPuzzleFrameTest {
         }
     }
 
-    /** Поиск JButton по тексту */
     private JButton findButton(Container c, String text) {
         for (Component comp : c.getComponents()) {
             if (comp instanceof JButton b && text.equals(b.getText())) return b;

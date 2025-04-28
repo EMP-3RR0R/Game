@@ -1,4 +1,4 @@
-package com.wormfarm.gui.frame;
+/*package com.wormfarm.gui.frame;
 
 import com.wormfarm.gui.base.BaseInternalFrame;
 import com.wormfarm.gui.panel.WormMapPanel;
@@ -37,4 +37,4 @@ public class WormGameWindow extends BaseInternalFrame {
     @Override
     protected void updateComponents() {
     }
-}
+}*/

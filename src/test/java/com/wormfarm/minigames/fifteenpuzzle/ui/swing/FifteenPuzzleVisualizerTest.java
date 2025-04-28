@@ -74,7 +74,6 @@ class FifteenPuzzleVisualizerTest {
 
     @Test
     void testPickRandomSpriteHandlesEmptySprites() throws Exception {
-        // Гарантируем, что loadedSprites пустой
         Field spritesF = visualizer.getClass().getDeclaredField("loadedSprites");
         spritesF.setAccessible(true);
         ((List<?>) spritesF.get(visualizer)).clear();
@@ -107,7 +106,6 @@ class FifteenPuzzleVisualizerTest {
         tilePositionsF.setAccessible(true);
         Map<Integer, Point> positions = (Map<Integer, Point>) tilePositionsF.get(visualizer);
         assertEquals(15, positions.size());
-        // Проверим — позиция тайла 1 (0,0)
         Point p = positions.get(1);
         assertEquals(0, p.x);
         assertEquals(0, p.y);
@@ -119,14 +117,12 @@ class FifteenPuzzleVisualizerTest {
         CountDownLatch latch = new CountDownLatch(1);
         SwingUtilities.invokeLater(() -> visualizer.animateMove(15, 3, 2, 3, 3, latch::countDown));
         assertTrue(latch.await(2, TimeUnit.SECONDS), "Callback не вызвался!");
-        // После окончания анимации
         assertFalse(visualizer.isAnimating());
     }
 
     @Test
     void testAnimateMoveIgnoresWhenAnimating() {
         visualizer.setBoard(solvedBoard);
-        // Подделываем поле animating
         try {
             Field animF = visualizer.getClass().getDeclaredField("animating");
             animF.setAccessible(true);
@@ -176,7 +172,6 @@ class FifteenPuzzleVisualizerTest {
         visualizer.setBoard(solvedBoard);
         Field imagesF = visualizer.getClass().getDeclaredField("tileImages");
         imagesF.setAccessible(true);
-        // Поделай массив картинок
         BufferedImage[] arr = new BufferedImage[SIZE*SIZE];
         for (int i = 0; i < arr.length-1; ++i)
             arr[i] = new BufferedImage(TILE_SIZE, TILE_SIZE, BufferedImage.TYPE_INT_ARGB);
@@ -190,7 +185,7 @@ class FifteenPuzzleVisualizerTest {
     @Test
     void testPaintComponentWithCorrectMask() {
         boolean[][] mask = new boolean[SIZE][SIZE];
-        mask[0][0] = true; mask[3][2] = true; // только две клетки помечены как правильные
+        mask[0][0] = true; mask[3][2] = true;
         FifteenPuzzleVisualizer v = new FifteenPuzzleVisualizer(SIZE, TILE_SIZE, new DummyLogic(mask));
         v.setBoard(solvedBoard);
         BufferedImage img = new BufferedImage(TILE_SIZE*SIZE, TILE_SIZE*SIZE, BufferedImage.TYPE_INT_ARGB);
@@ -236,7 +231,6 @@ class FifteenPuzzleVisualizerTest {
         spritesF.setAccessible(true);
         List<BufferedImage> sprites = (List<BufferedImage>) spritesF.get(visualizer);
         sprites.add(new BufferedImage(1,1,BufferedImage.TYPE_INT_ARGB));
-        // Триггерим событие
         for (HierarchyListener hl : visualizer.getHierarchyListeners()) {
             hl.hierarchyChanged(new HierarchyEvent(visualizer, HierarchyEvent.DISPLAYABILITY_CHANGED, visualizer, visualizer, HierarchyEvent.DISPLAYABILITY_CHANGED));
         }
@@ -266,7 +260,6 @@ class FifteenPuzzleVisualizerTest {
         before.put(1, new Point(123, 45));
         positionsF.set(visualizer, before);
         visualizer.setBoard(solvedBoard);
-        // positions не должны были измениться
         assertEquals(before, positionsF.get(visualizer));
     }
 

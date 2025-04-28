@@ -1,6 +1,5 @@
 package com.wormfarm.minigames.fifteenpuzzle.logic;
 
-import com.wormfarm.minigames.fifteenpuzzle.api.FifteenPuzzleGame;
 import com.wormfarm.minigames.fifteenpuzzle.events.PuzzleEventListener;
 import org.junit.jupiter.api.*;
 
@@ -19,7 +18,7 @@ class ClassicFifteenPuzzleLogicTest {
     @BeforeEach
     void setUp() {
         logic = new ClassicFifteenPuzzleLogic(4);
-        logic.solvePuzzle(); // всегда начинаем с решённого состояния
+        logic.solvePuzzle();
     }
 
     @Test
@@ -37,21 +36,16 @@ class ClassicFifteenPuzzleLogicTest {
 
     @Test
     void testMoveTile_ValidAndInvalid() {
-        // Валидный ход (15 вправо)
         assertTrue(logic.moveTile(3, 2));
-        // Пустое место теперь на (3,2)
         int[][] board = logic.getBoardCopy();
         assertEquals(0, board[3][2]);
         assertEquals(15, board[3][3]);
-        // Невалидный ход (угловой)
         assertFalse(logic.moveTile(0, 0));
-        // Положение не поменялось
         assertEquals(1, board[0][0]);
     }
 
     @Test
     void testMoveTile_MoveBackAndForth() {
-        // Сдвиг вправо и обратно
         assertTrue(logic.moveTile(3, 2));
         assertTrue(logic.moveTile(3, 3));
         assertTrue(logic.isSolved());
@@ -78,7 +72,6 @@ class ClassicFifteenPuzzleLogicTest {
     @Test
     void testResetBoard_AfterSolve_NotSolved() {
         logic.resetBoard();
-        // Почти всегда не решено после перемешивания
         assertFalse(logic.isSolved());
         assertEquals(0, logic.getMoveCount());
     }
@@ -138,14 +131,13 @@ class ClassicFifteenPuzzleLogicTest {
             public void onWin() { winCalled.set(true);}
         });
         logic.moveTile(3, 2);
-        logic.moveTile(3, 3); // возвращаем обратно — теперь выигрыш
+        logic.moveTile(3, 3);
         assertTrue(winCalled.get());
     }
 
     @Test
     void testShuffleBoardProducesSolvableState() {
         logic.shuffleBoard(80);
-        // В 15-пазле после shuffleBoard всегда достижимо решение solvePuzzle()
         logic.solvePuzzle();
         assertTrue(logic.isSolved());
     }
@@ -214,12 +206,10 @@ class ClassicFifteenPuzzleLogicTest {
     @Test
     void testGetEmptyXandYThrowsIfNoZero() throws Exception {
         ClassicFifteenPuzzleLogic l2 = new ClassicFifteenPuzzleLogic(3);
-        // Подделываем board: все значения != 0
         int[][] b = l2.getBoardCopy();
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
                 b[i][j] = i*3+j+1;
-        // Вставляем через reflection
         java.lang.reflect.Field f = ClassicFifteenPuzzleLogic.class.getDeclaredField("board");
         f.setAccessible(true);
         f.set(l2, b);
@@ -229,14 +219,10 @@ class ClassicFifteenPuzzleLogicTest {
 
     @Test
     void testIsValidMove_Correctness() throws Exception {
-        // Решённая позиция, пустое место (3,3)
         java.lang.reflect.Method m = ClassicFifteenPuzzleLogic.class.getDeclaredMethod("isValidMove", int.class, int.class);
         m.setAccessible(true);
-        // (3,2) - рядом
         assertTrue((Boolean)m.invoke(logic, 3,2));
-        // (2,3) - рядом
         assertTrue((Boolean)m.invoke(logic, 2,3));
-        // (0,0) - не рядом
         assertFalse((Boolean)m.invoke(logic, 0,0));
     }
 
@@ -244,10 +230,8 @@ class ClassicFifteenPuzzleLogicTest {
     void testGetAdjacentTilesReturnsAllPossible() throws Exception {
         java.lang.reflect.Method m = ClassicFifteenPuzzleLogic.class.getDeclaredMethod("getAdjacentTiles", int.class, int.class);
         m.setAccessible(true);
-        // центр
         List<int[]> adj = (List<int[]>) m.invoke(logic, 1,1);
         assertEquals(4, adj.size());
-        // угол
         adj = (List<int[]>) m.invoke(logic, 0,0);
         assertEquals(2, adj.size());
     }
@@ -264,7 +248,7 @@ class ClassicFifteenPuzzleLogicTest {
     @Test
     void testRemoveEventListenerNotInListNoException() {
         PuzzleEventListener l = Mockito.mock(PuzzleEventListener.class);
-        logic.removeEventListener(l); // не было — не должно быть исключения
+        logic.removeEventListener(l);
     }
 
     @Test
@@ -285,10 +269,10 @@ class ClassicFifteenPuzzleLogicTest {
 
     @Test
     void testMoveTileAfterWinIncrementsMoveCount() {
-        logic.moveTile(3,2); // не решена
-        logic.moveTile(3,3); // снова решена
+        logic.moveTile(3,2);
+        logic.moveTile(3,3);
         int moves = logic.getMoveCount();
-        logic.moveTile(3,2); // снова делаем ход
+        logic.moveTile(3,2);
         assertEquals(moves+1, logic.getMoveCount());
     }
 

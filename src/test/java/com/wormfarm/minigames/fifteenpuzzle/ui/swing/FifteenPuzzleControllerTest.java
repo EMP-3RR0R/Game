@@ -7,7 +7,6 @@ import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,7 +32,6 @@ class FifteenPuzzleControllerTest {
         controller = new FifteenPuzzleController(logic, visualizer, parent, statsManager);
     }
 
-    /** Вспомогательная функция для прямой подмены содержимого доски */
     private void setBoard(ClassicFifteenPuzzleLogic logic, int[][] board) {
         try {
             var f = ClassicFifteenPuzzleLogic.class.getDeclaredField("board");
@@ -46,7 +44,6 @@ class FifteenPuzzleControllerTest {
 
     @Test
     void testClickOnMovableTile_AnimatesMoveAndPlaysSound() {
-        // (3,3) = 0; (3,2) = 15. Клик на (3,2) должен сдвинуть 15 вправо
         int[][] board = {
                 {1, 2, 3, 4},
                 {5, 6, 7, 8},
@@ -108,7 +105,6 @@ class FifteenPuzzleControllerTest {
 
     @Test
     void testClickWhenGameOverDoesNothing() throws Exception {
-        // Вручную выставляем gameOver = true
         var f = FifteenPuzzleController.class.getDeclaredField("gameOver");
         f.setAccessible(true);
         f.set(controller, true);
@@ -148,7 +144,7 @@ class FifteenPuzzleControllerTest {
         try (var mockedSound = Mockito.mockStatic(SoundUtils.class);
              var mockedOptionPane = Mockito.mockStatic(JOptionPane.class)) {
             mockedOptionPane.when(() -> JOptionPane.showOptionDialog(any(), any(), any(), anyInt(), anyInt(), any(), any(), any()))
-                    .thenReturn(0); // "Сыграть ещё!"
+                    .thenReturn(0);
 
             controller.handleWinOnEdt();
 
@@ -177,7 +173,7 @@ class FifteenPuzzleControllerTest {
         try (var mockedSound = Mockito.mockStatic(SoundUtils.class);
              var mockedOptionPane = Mockito.mockStatic(JOptionPane.class)) {
             mockedOptionPane.when(() -> JOptionPane.showOptionDialog(any(), any(), any(), anyInt(), anyInt(), any(), any(), any()))
-                    .thenReturn(1); // "Вернуться к приключениям!"
+                    .thenReturn(1);
             ctrl.handleWinOnEdt();
             verify(dlg).dispose();
             verify(statsManager, atLeastOnce()).addCoins(10);
@@ -193,7 +189,6 @@ class FifteenPuzzleControllerTest {
         WormStatsManager statsManager = mock(WormStatsManager.class);
         FifteenPuzzleController ctrl = new FifteenPuzzleController(logic, visualizer, parent, statsManager);
 
-        // Ищем listener в logic
         com.wormfarm.minigames.fifteenpuzzle.events.PuzzleEventListener listener = null;
         for (var l : logic.getClass().getDeclaredFields()) {
             if (l.getType().getName().contains("List")) {
