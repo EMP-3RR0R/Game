@@ -7,11 +7,11 @@ import java.util.List;
 public class SaveGameDialog extends JDialog {
     private String selectedName = null;
     public SaveGameDialog(JFrame owner, List<String> existingNames) {
-        super(owner, "Сохранить игру", true);
+        super(owner, "save.dialog.title", true);
         setLayout(new BorderLayout(10, 10));
 
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
-        JLabel lbl = new JLabel("Имя сохранения:");
+        JLabel lbl = new JLabel("save.dialog.name");
         JTextField nameField = new JTextField();
         inputPanel.add(lbl, BorderLayout.WEST);
         inputPanel.add(nameField, BorderLayout.CENTER);
@@ -34,14 +34,14 @@ public class SaveGameDialog extends JDialog {
         add(scrollPane, BorderLayout.CENTER);
 
         JPanel btnPanel = new JPanel();
-        JButton ok = new JButton("Сохранить");
-        JButton cancel = new JButton("Отмена");
+        JButton ok = new JButton("save.dialog.save");
+        JButton cancel = new JButton("save.dialog.cancel");
         btnPanel.add(ok); btnPanel.add(cancel);
 
         ok.addActionListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Введите имя сохранения!");
+                JOptionPane.showMessageDialog(this, "save.dialog.entername");
                 return;
             }
             selectedName = name;

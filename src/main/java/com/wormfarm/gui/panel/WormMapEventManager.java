@@ -6,11 +6,13 @@ import com.wormfarm.core.model.EventMapModel;
 import com.wormfarm.core.logic.WormMover;
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.minigames.fifteenpuzzle.ui.swing.FifteenPuzzleFrame;
+import com.wormfarm.settings.AppLocale;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 public class WormMapEventManager {
@@ -19,6 +21,8 @@ public class WormMapEventManager {
     private final EventMapModel mapModel;
     private final Set<EventMarker> activeMarkers;
     private final Map<EventMarker, Long> recentlyActivated;
+
+    private final ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
 
     public WormMapEventManager(
             WormMapPanel panel,
@@ -83,8 +87,8 @@ public class WormMapEventManager {
                     public void windowClosing(WindowEvent e) {
                         int confirm = JOptionPane.showConfirmDialog(
                                 dialog,
-                                "Вы уверены, что хотите выйти из пятнашек?\nПрогресс будет потерян.",
-                                "Подтвердите выход",
+                                messages.getString("puzzle.confirm.exit") + "\n" + messages.getString("puzzle.progress.lost"),
+                                messages.getString("puzzle.confirm.exit.title"),
                                 JOptionPane.YES_NO_OPTION,
                                 JOptionPane.WARNING_MESSAGE
                         );

@@ -1,11 +1,20 @@
 package com.wormfarm.gui.dialog;
 
+import com.wormfarm.settings.AppLocale;
+import com.wormfarm.settings.SettingsDialog;
+
 import javax.swing.*;
 import java.awt.*;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.ResourceBundle;
 
 public class PauseMenuDialog extends JDialog {
+    private JButton btnResume;
+    private JButton btnLoad;
+    private JButton btnSave;
+    private JButton btnSettings;
+    private JButton btnExitToMenu;
+    private JButton btnExitToDesktop;
+
     public PauseMenuDialog(
             JFrame owner,
             Runnable onResume,
@@ -13,15 +22,19 @@ public class PauseMenuDialog extends JDialog {
             Runnable onExitToDesktop,
             Runnable onSave,
             Runnable onLoad,
-            boolean loadEnabled
+            boolean loadEnabled,
+            Runnable onLanguageChanged
     ) {
-        super(owner, "Меню", true);
+        super(owner, ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale()).getString("pause.menu.title"), true);
+
+        ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
+
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridy = 0; gbc.insets = new Insets(10,0,10,0);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JButton btnResume = new JButton("Продолжить");
+        btnResume = new JButton(messages.getString("pause.resume"));
         btnResume.setPreferredSize(new Dimension(220, 36));
         btnResume.addActionListener(e -> {
             dispose();
@@ -30,7 +43,7 @@ public class PauseMenuDialog extends JDialog {
         add(btnResume, gbc);
 
         gbc.gridy++;
-        JButton btnLoad = new JButton("Загрузить");
+        btnLoad = new JButton(messages.getString("pause.load"));
         btnLoad.setPreferredSize(new Dimension(220, 36));
         btnLoad.setEnabled(loadEnabled);
         btnLoad.addActionListener(e -> {
@@ -40,7 +53,7 @@ public class PauseMenuDialog extends JDialog {
         add(btnLoad, gbc);
 
         gbc.gridy++;
-        JButton btnSave = new JButton("Сохранить");
+        btnSave = new JButton(messages.getString("pause.save"));
         btnSave.setPreferredSize(new Dimension(220, 36));
         btnSave.addActionListener(e -> {
             dispose();
@@ -49,16 +62,20 @@ public class PauseMenuDialog extends JDialog {
         add(btnSave, gbc);
 
         gbc.gridy++;
-        JButton btnSettings = new JButton("Настройки");
+        btnSettings = new JButton(messages.getString("pause.settings"));
         btnSettings.setPreferredSize(new Dimension(220, 36));
         btnSettings.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Настройки пока недоступны.", "Заглушка", JOptionPane.INFORMATION_MESSAGE);
+            SettingsDialog settingsDialog = new SettingsDialog(this, () -> {
+                updateTexts();
+                if (onLanguageChanged != null) onLanguageChanged.run();
+            });
+            settingsDialog.setLocationRelativeTo(this);
+            settingsDialog.setVisible(true);
         });
         add(btnSettings, gbc);
 
-
         gbc.gridy++;
-        JButton btnExitToMenu = new JButton("Выход в меню");
+        btnExitToMenu = new JButton(messages.getString("pause.exit.menu"));
         btnExitToMenu.setPreferredSize(new Dimension(220, 36));
         btnExitToMenu.addActionListener(e -> {
             dispose();
@@ -67,7 +84,7 @@ public class PauseMenuDialog extends JDialog {
         add(btnExitToMenu, gbc);
 
         gbc.gridy++;
-        JButton btnExitToDesktop = new JButton("Выход на рабочий стол");
+        btnExitToDesktop = new JButton(messages.getString("pause.exit"));
         btnExitToDesktop.setPreferredSize(new Dimension(220, 36));
         btnExitToDesktop.addActionListener(e -> {
             if (onExitToDesktop != null) onExitToDesktop.run();
@@ -77,5 +94,17 @@ public class PauseMenuDialog extends JDialog {
         pack();
         setLocationRelativeTo(owner);
         setResizable(false);
+    }
+
+    // Обновление текстов после смены языка
+    private void updateTexts() {
+        ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
+        setTitle(messages.getString("pause.menu.title"));
+        btnResume.setText(messages.getString("pause.resume"));
+        btnLoad.setText(messages.getString("pause.load"));
+        btnSave.setText(messages.getString("pause.save"));
+        btnSettings.setText(messages.getString("pause.settings"));
+        btnExitToMenu.setText(messages.getString("pause.exit.menu"));
+        btnExitToDesktop.setText(messages.getString("pause.exit"));
     }
 }

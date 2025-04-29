@@ -8,6 +8,8 @@ import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.gui.dialog.LoadGameDialog;
 import com.wormfarm.gui.panel.MainMenuPanel;
 import com.wormfarm.gui.panel.WormMapPanel;
+import com.wormfarm.settings.AppLocale;
+import com.wormfarm.settings.SettingsDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +17,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class MainApplicationFrame extends JFrame {
@@ -31,9 +32,10 @@ public class MainApplicationFrame extends JFrame {
     private WormMapPanel currentMapPanel;
 
     public MainApplicationFrame() {
-        messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", Locale.getDefault());
+        AppLocale.setLocale(AppLocale.detectDefaultLocaleLang());
+        messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
 
-        setTitle("Worm Game");
+        setTitle("Worm Farm");
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
         addWindowListener(new WindowAdapter() {
@@ -68,7 +70,7 @@ public class MainApplicationFrame extends JFrame {
                 this::continueGame,
                 this::startNewGame,
                 this::loadGame,
-                this::openSettings,
+                this::openSettings, // только передаем обработчик
                 this::exitGame
         ));
         revalidate();
@@ -105,17 +107,17 @@ public class MainApplicationFrame extends JFrame {
         } else {
             List<String> saves = WormSaveManager.listSaves();
             if (saves.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Нет сохранений для продолжения.");
+                JOptionPane.showMessageDialog(this, messages.getString("no.saves.to.continue"));
                 return;
             }
-            loadSpecificGame(saves.get(saves.size() - 1)); // последнее сохранение
+            loadSpecificGame(saves.get(saves.size() - 1));
         }
     }
 
     public void loadGame() {
         List<String> saves = WormSaveManager.listSaves();
         if (saves.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Нет доступных сохранений.");
+            JOptionPane.showMessageDialog(this, messages.getString("no.saves.available"));
             return;
         }
 
@@ -147,12 +149,13 @@ public class MainApplicationFrame extends JFrame {
             currentMapPanel.requestFocusInWindow();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Ошибка загрузки сохранения: " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    messages.getString("error.load.save") + ": " + e.getMessage());
         }
     }
 
     public void openSettings() {
-        JOptionPane.showMessageDialog(this, "Настройки пока недоступны!", "Настройки", JOptionPane.INFORMATION_MESSAGE);
+        // Здесь больше ничего не делаем, ответственность полностью на MainMenuPanel
     }
 
     public void exitGame() {
@@ -161,6 +164,7 @@ public class MainApplicationFrame extends JFrame {
 
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
+        // Можно добавить локализованные пункты меню здесь, если нужно
         return menuBar;
     }
 
