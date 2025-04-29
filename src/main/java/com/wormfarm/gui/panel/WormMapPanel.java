@@ -37,6 +37,11 @@ public class WormMapPanel extends JPanel {
         this.onExitToMenu = onExitToMenu;
     }
 
+    private Runnable onLanguageChanged = null;
+    public void setOnLanguageChanged(Runnable onLanguageChanged) {
+        this.onLanguageChanged = onLanguageChanged;
+    }
+
     private final WormMapEventManager eventManager;
     private final WormMapMenuHelper menuHelper;
 
@@ -169,6 +174,7 @@ public class WormMapPanel extends JPanel {
     }
 
     private void showPauseMenu() {
-        menuHelper.showPauseMenu(ownerFrame, onExitToMenu);
+        // Теперь menuHelper вызывает showPauseMenu с onExitToMenu и onLanguageChanged
+        menuHelper.showPauseMenu(ownerFrame, onExitToMenu, onLanguageChanged);
     }
 }

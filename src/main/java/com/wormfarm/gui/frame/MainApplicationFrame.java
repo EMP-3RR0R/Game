@@ -70,7 +70,7 @@ public class MainApplicationFrame extends JFrame {
                 this::continueGame,
                 this::startNewGame,
                 this::loadGame,
-                this::openSettings, // только передаем обработчик
+                this::openSettings,
                 this::exitGame
         ));
         revalidate();

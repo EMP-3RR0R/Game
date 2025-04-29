@@ -1,17 +1,22 @@
 package com.wormfarm.gui.dialog;
 
+import com.wormfarm.settings.AppLocale;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.ResourceBundle;
 
 public class SaveGameDialog extends JDialog {
     private String selectedName = null;
+    ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
+
     public SaveGameDialog(JFrame owner, List<String> existingNames) {
-        super(owner, "save.dialog.title", true);
+        super(owner, ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale()).getString("save.dialog.title"), true);
         setLayout(new BorderLayout(10, 10));
 
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
-        JLabel lbl = new JLabel("save.dialog.name");
+        JLabel lbl = new JLabel(messages.getString("save.dialog.name"));
         JTextField nameField = new JTextField();
         inputPanel.add(lbl, BorderLayout.WEST);
         inputPanel.add(nameField, BorderLayout.CENTER);
@@ -34,14 +39,14 @@ public class SaveGameDialog extends JDialog {
         add(scrollPane, BorderLayout.CENTER);
 
         JPanel btnPanel = new JPanel();
-        JButton ok = new JButton("save.dialog.save");
-        JButton cancel = new JButton("save.dialog.cancel");
+        JButton ok = new JButton(messages.getString("save.dialog.save"));
+        JButton cancel = new JButton(messages.getString("save.dialog.cancel"));
         btnPanel.add(ok); btnPanel.add(cancel);
 
         ok.addActionListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "save.dialog.entername");
+                JOptionPane.showMessageDialog(this, messages.getString("save.dialog.entername"));
                 return;
             }
             selectedName = name;

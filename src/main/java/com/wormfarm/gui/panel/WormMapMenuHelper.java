@@ -17,7 +17,7 @@ public class WormMapMenuHelper {
         this.statsManager = statsManager;
     }
 
-    public void showPauseMenu(JFrame owner, Runnable onExitToMenu) {
+    public void showPauseMenu(JFrame owner, Runnable onExitToMenu, Runnable onLanguageChanged) {
         com.wormfarm.gui.dialog.PauseMenuDialog dlg = new com.wormfarm.gui.dialog.PauseMenuDialog(
                 owner,
                 panel::requestFocusInWindow,
@@ -25,7 +25,8 @@ public class WormMapMenuHelper {
                 () -> System.exit(0),
                 this::saveGameWithName,
                 this::loadGameWithName,
-                !com.wormfarm.core.logic.WormSaveManager.listSaves().isEmpty()
+                !com.wormfarm.core.logic.WormSaveManager.listSaves().isEmpty(),
+                onLanguageChanged
         );
         dlg.setVisible(true);
     }
