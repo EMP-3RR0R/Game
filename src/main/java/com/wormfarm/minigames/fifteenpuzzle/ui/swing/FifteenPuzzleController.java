@@ -17,6 +17,16 @@ public class FifteenPuzzleController {
     private final WormStatsManager wormStatsManager;
     private boolean gameOver = false;
 
+    private boolean isPaused = false;
+
+    public void pauseGame() {
+        isPaused = true;
+    }
+
+    public void resumeGame() {
+        isPaused = false;
+    }
+
     public FifteenPuzzleController(FifteenPuzzleGame game, FifteenPuzzleVisualizer visualizer, Component parentComponent, WormStatsManager wormStatsManager) {
         this.game = game;
         this.visualizer = visualizer;
@@ -26,6 +36,7 @@ public class FifteenPuzzleController {
         visualizer.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                if (isPaused || gameOver || visualizer.isAnimating()) return;
                 if (gameOver || visualizer.isAnimating()) return;
                 int tileSize = visualizer.getWidth() / game.getSize();
                 int row = e.getY() / tileSize;
@@ -127,5 +138,9 @@ public class FifteenPuzzleController {
                 if (dlg != null) dlg.dispose();
             }
         }
+    }
+
+    public boolean isPausedGame() {
+        return isPaused;
     }
 }

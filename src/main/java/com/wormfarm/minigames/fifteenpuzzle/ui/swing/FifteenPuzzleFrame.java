@@ -1,16 +1,19 @@
 package com.wormfarm.minigames.fifteenpuzzle.ui.swing;
 
+import com.wormfarm.minigames.common.BaseMiniGameFrame;
 import com.wormfarm.minigames.fifteenpuzzle.logic.ClassicFifteenPuzzleLogic;
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.core.model.WormStats;
-import com.wormfarm.gui.base.BaseInternalFrame;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
-public class FifteenPuzzleFrame extends BaseInternalFrame {
+
+public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     private static final int SIZE = 4;
     private static final int TILE_SIZE = 100;
 
@@ -27,19 +30,38 @@ public class FifteenPuzzleFrame extends BaseInternalFrame {
     // --- Новое поле для менеджера статистики ---
     private final WormStatsManager wormStatsManager;
 
-    // --- Новый конструктор, позволяющий передавать WormStatsManager извне ---
+    // Новый конструктор, передающий WormStatsManager извне
     public FifteenPuzzleFrame(WormStatsManager wormStatsManager) {
-        super("puzzle.title", true, true, true, true);
+        super("puzzle.title", wormStatsManager);
+        System.out.println("here");
 
         this.wormStatsManager = wormStatsManager;
-
-        setLayout(new BorderLayout());
 
         logic = new ClassicFifteenPuzzleLogic(SIZE);
         visualizer = new FifteenPuzzleVisualizer(SIZE, TILE_SIZE, logic);
         controller = new FifteenPuzzleController(logic, visualizer, this, wormStatsManager);
 
-        // Панель с таймером и ходами
+        // --- Гарантированная обработка ESC, даже если фокус не на нужном компоненте ---
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent e) {
+                if (e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    System.out.println("dkdf");
+                    if (controller.isPausedGame()) {
+                        controller.resumeGame();
+                    } else {
+                        controller.pauseGame();
+                        showPauseMenu();
+                    }
+                }
+                return false;
+            }
+        });
+
+
+
+        setLayout(new BorderLayout());
+
         JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         timerLabel.setFont(new Font("Arial", Font.BOLD, 16));
         movesLabel.setFont(new Font("Arial", Font.BOLD, 16));
@@ -54,7 +76,7 @@ public class FifteenPuzzleFrame extends BaseInternalFrame {
 
         resetButton.addActionListener(e -> {
             logic.resetBoard();
-            visualizer.resetPuzzleImage(); // Меняем спрайт при сбросе
+            visualizer.resetPuzzleImage();
             visualizer.setBoard(logic.getBoardCopy());
             visualizer.repaint();
             updateInfo();
@@ -77,10 +99,10 @@ public class FifteenPuzzleFrame extends BaseInternalFrame {
         setPreferredSize(new Dimension(SIZE * TILE_SIZE + 20, SIZE * TILE_SIZE + 120));
         setMinimumSize(new Dimension(SIZE * TILE_SIZE + 20, SIZE * TILE_SIZE + 120));
         setMaximumSize(new Dimension(SIZE * TILE_SIZE + 20, SIZE * TILE_SIZE + 120));
-        setResizable(false); // Запретить изменение размера окна
+        setResizable(false); // Prevent resizing
 
         visualizer.setBoard(logic.getBoardCopy());
-        visualizer.resetPuzzleImage(); // Первый спрайт при старте
+        visualizer.resetPuzzleImage(); // First sprite when starting
 
         uiTimer = new Timer(500, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -90,9 +112,6 @@ public class FifteenPuzzleFrame extends BaseInternalFrame {
         uiTimer.start();
     }
 
-    // Оставляем старый конструктор для обратной совместимости,
-    // но он будет создавать временный менеджер (монеты не сохранятся!) —
-    // в реальном приложении лучше всегда использовать новый конструктор!
     public FifteenPuzzleFrame() {
         this(new WormStatsManager(new WormStats(0)));
     }
@@ -106,10 +125,10 @@ public class FifteenPuzzleFrame extends BaseInternalFrame {
         movesLabel.setText("Ходы: " + logic.getMoveCount());
     }
 
-    // Для связи с диалогом
     public void setParentDialog(JDialog dialog) {
         this.parentDialog = dialog;
     }
+
     public JDialog getParentDialog() {
         return parentDialog;
     }
@@ -121,12 +140,38 @@ public class FifteenPuzzleFrame extends BaseInternalFrame {
 
     @Override
     protected void updateComponents() {
-        // Обновление локализации и других компонентов, если потребуется
+        // Update localization and other components if needed
     }
 
     @Override
     public void dispose() {
         super.dispose();
-        visualizer.clearSprites(); // Очищаем ресурсы спрайтов при закрытии
+        visualizer.clearSprites();
+    }
+
+    @Override
+    public void startGame() {
+        logic.resetBoard();
+        visualizer.setBoard(logic.getBoardCopy());
+        visualizer.resetPuzzleImage();
+        visualizer.repaint();
+        uiTimer.start();
+    }
+
+    @Override
+    public void pauseGame() {
+        uiTimer.stop();
+        logic.pauseGame();
+    }
+
+    @Override
+    public void resumeGame() {
+        uiTimer.start();
+        logic.resumeGame();
+    }
+    @Override
+    public void endGame() {
+        uiTimer.stop();
+        visualizer.clearSprites();
     }
 }

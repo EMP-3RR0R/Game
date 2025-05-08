@@ -17,6 +17,8 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
     private long startTime = 0;
     private long endTime = 0;
     private boolean isShuffling = false;
+    private boolean isPaused;
+    private long elapsedTime;
 
     public ClassicFifteenPuzzleLogic(int size) {
         this.size = size;
@@ -84,9 +86,20 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
         }
         board[size - 1][size - 1] = 0;
         moveCount = 0;
-        startTimer();
+        startTime = System.currentTimeMillis();
+        elapsedTime = 0;
+        isPaused = false;
         shuffleBoard(5000 + random.nextInt(10000));
     }
+
+    public void pauseGame() {
+        if (!isPaused) {
+            elapsedTime += System.currentTimeMillis() - startTime;
+            isPaused = true;
+        }
+    }
+
+
 
     public void shuffleBoard(int minMoves) {
         isShuffling = true;
@@ -198,7 +211,22 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
         endTime = System.currentTimeMillis();
     }
 
-    public long getElapsedTimeMillis() {
+    /*public long getElapsedTimeMillis() {
         return (endTime > 0 ? endTime : System.currentTimeMillis()) - startTime;
+    }*/
+    public void resumeGame() {
+        if (isPaused) {
+            startTime = System.currentTimeMillis();
+            isPaused = false;
+        }
     }
+
+    public long getElapsedTimeMillis() {
+        if (isPaused) {
+            return elapsedTime;
+        } else {
+            return elapsedTime + (System.currentTimeMillis() - startTime);
+        }
+    }
+
 }
