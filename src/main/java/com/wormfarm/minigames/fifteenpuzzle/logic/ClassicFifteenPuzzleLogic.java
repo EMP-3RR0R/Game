@@ -13,6 +13,8 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
     private final List<PuzzleEventListener> listeners = new ArrayList<>();
     private final Random random = new Random();
 
+    private int lastWinMoveCount = 0;
+    private long lastWinElapsedTime = 0;
     private int moveCount = 0;
     private long startTime = 0;
     private long endTime = 0;
@@ -52,6 +54,8 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
             fireMoveEvent(x, y, true);
             if (!isShuffling && isSolved()) {
                 stopTimer();
+                lastWinMoveCount = moveCount;
+                lastWinElapsedTime = getElapsedTimeMillis();
                 fireWinEvent();
             }
         } else {
@@ -162,7 +166,6 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
         return mask;
     }
 
-    /** Решает пятнашки "читерски" — выставляет их в правильное состояние */
     public void solvePuzzle() {
         int count = 1;
         for (int i = 0; i < size; i++) {
@@ -171,6 +174,8 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
             }
         }
         board[size - 1][size - 1] = 0;
+        lastWinMoveCount = moveCount;
+        lastWinElapsedTime = getElapsedTimeMillis();
         moveCount = 0;
         stopTimer();
         fireMoveEvent(-1, -1, true);
@@ -196,10 +201,15 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
         for (PuzzleEventListener l : listeners) l.onWin();
     }
 
-    // --- Move counter and timer ---
-
     public int getMoveCount() {
         return moveCount;
+    }
+
+    public int getLastWinMoveCount() {
+        return lastWinMoveCount;
+    }
+    public long getLastWinElapsedTime() {
+        return lastWinElapsedTime;
     }
 
     public void startTimer() {

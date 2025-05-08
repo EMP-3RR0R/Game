@@ -15,14 +15,14 @@ public class WormSaveManager {
         saveDir = dir;
     }
 
-    public static void save(WormState state, WormStats stats, String saveName) throws IOException {
-        validateSaveName(saveName); // Валидация должна быть первой
+    public static void save(WormState state, WormStats stats, int targetX, int targetY, String saveName) throws IOException {
+        validateSaveName(saveName);
         File dir = new File(saveDir);
         if (!dir.exists() && !dir.mkdirs()) {
             throw new IOException("Failed to create save directory: " + saveDir);
         }
         File file = new File(dir, saveName + ".save");
-        WormSaveData data = new WormSaveData(state, stats);
+        WormSaveData data = new WormSaveData(state, stats, targetX, targetY);
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file))) {
             out.writeObject(data);
         }
@@ -33,11 +33,11 @@ public class WormSaveManager {
         return file.exists();
     }
 
-    public static void load(WormState state, WormStats stats, String saveName) throws IOException, ClassNotFoundException {
+    public static void load(WormState state, WormStats stats, WormSaveData.TargetConsumer targetConsumer, String saveName) throws IOException, ClassNotFoundException {
         File file = new File(saveDir, saveName + ".save");
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))) {
             WormSaveData data = (WormSaveData) in.readObject();
-            data.applyTo(state, stats);
+            data.applyTo(state, stats, targetConsumer);
         }
     }
 

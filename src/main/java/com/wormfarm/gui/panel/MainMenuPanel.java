@@ -9,16 +9,18 @@ import java.util.ResourceBundle;
 
 public class MainMenuPanel extends JPanel {
 
-    public MainMenuPanel(Runnable onContinue, Runnable onNewGame, Runnable onLoadGame, Runnable onSettings, Runnable onExit) {
+    public MainMenuPanel(Runnable onContinue, Runnable onNewGame, Runnable onLoadGame, Runnable onSettings, Runnable onExit, boolean hasSaves) {
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridy = 0;
         gbc.insets = new Insets(10, 0, 10, 0);
 
         ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
+
         JButton btnContinue = new JButton(messages.getString("main.menu.continue"));
         btnContinue.setPreferredSize(new Dimension(200, 40));
         btnContinue.addActionListener(e -> onContinue.run());
+        btnContinue.setEnabled(hasSaves);
         add(btnContinue, gbc);
 
         gbc.gridy++;
@@ -31,6 +33,7 @@ public class MainMenuPanel extends JPanel {
         JButton btnLoadGame = new JButton(messages.getString("main.menu.loadgame"));
         btnLoadGame.setPreferredSize(new Dimension(200, 40));
         btnLoadGame.addActionListener(e -> onLoadGame.run());
+        btnLoadGame.setEnabled(hasSaves);
         add(btnLoadGame, gbc);
 
         gbc.gridy++;

@@ -17,29 +17,20 @@ public class FifteenPuzzleVisualizer extends JPanel {
     private final int size;
     private final int tileSize;
 
-    // Анимация перемещения
     private final java.util.Map<Integer, Point> tilePositions = new java.util.HashMap<>();
     private final java.util.Map<Integer, Point> tileTargetPositions = new java.util.HashMap<>();
     private Timer animationTimer;
     private boolean animating = false;
 
-    // Анимация "дрожи"
     private final java.util.Map<Integer, Point> shakeOffsets = new java.util.HashMap<>();
 
-    // Список всех подходящих картинок (BufferedImage), которые были загружены
     private List<BufferedImage> loadedSprites = new ArrayList<>();
-    // Текущий рабочий массив нарезанных тайлов
     private BufferedImage[] tileImages = null;
-    // Индекс текущей картинки (в loadedSprites)
     private int currentSpriteIndex = -1;
 
     private final Random random = new Random();
-
-    // --- Текстура земли для фона (уменьшенная) ---
     private static BufferedImage groundTexture = null;
     private static final int GROUND_TEXTURE_SIZE = 64;
-
-    // --- Логика для маски правильных тайлов ---
     private final Object logic;
 
     static {
@@ -55,7 +46,6 @@ public class FifteenPuzzleVisualizer extends JPanel {
         }
     }
 
-    // Уменьшение текстуры до нужного размера
     private static BufferedImage resizeTexture(BufferedImage img, int targetW, int targetH) {
         Image scaled = img.getScaledInstance(targetW, targetH, Image.SCALE_SMOOTH);
         BufferedImage small = new BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_ARGB);
@@ -86,7 +76,6 @@ public class FifteenPuzzleVisualizer extends JPanel {
         });
     }
 
-    // Загружает все FifteenPuzzleSpriteN начиная с 1, пока не встретится ошибка
     private void loadAllSprites() {
         loadedSprites.clear();
         int n = 1;
@@ -107,14 +96,12 @@ public class FifteenPuzzleVisualizer extends JPanel {
         }
     }
 
-    // Очищает список загруженных картинок (вызывать при закрытии)
     public void clearSprites() {
         loadedSprites.clear();
         tileImages = null;
         currentSpriteIndex = -1;
     }
 
-    // Выбор рандомной картинки из списка (и нарезка её на тайлы)
     private void pickRandomSprite() {
         if (loadedSprites.isEmpty()) {
             tileImages = null;
@@ -156,12 +143,10 @@ public class FifteenPuzzleVisualizer extends JPanel {
         repaint();
     }
 
-    // Сброс игры: выбираем новый спрайт
     public void resetPuzzleImage() {
         pickRandomSprite();
     }
 
-    // Обновить позиции тайлов без анимации
     private void updateTilePositions() {
         tilePositions.clear();
         if (board == null) return;
@@ -175,7 +160,6 @@ public class FifteenPuzzleVisualizer extends JPanel {
         }
     }
 
-    // Запустить анимацию движения value из (fromRow,fromCol) в (toRow,toCol)
     public void animateMove(final int value, int fromRow, int fromCol, int toRow, int toCol, Runnable callback) {
         if (animating) return;
         animating = true;
@@ -214,9 +198,8 @@ public class FifteenPuzzleVisualizer extends JPanel {
         return animating;
     }
 
-    // Анимация "дрожи"
     public void animateShake(int value) {
-        final int shakeDistance = 1; // пикселей
+        final int shakeDistance = 1;
         final int shakeFrames = 8;
         final int[] shakePattern = {+1, -2, +2, -2, +2, -1, 0, 0};
 
@@ -243,7 +226,6 @@ public class FifteenPuzzleVisualizer extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // 1. Рисуем фон — землю текстурой тайлом
         if (groundTexture != null) {
             int texW = groundTexture.getWidth();
             int texH = groundTexture.getHeight();
@@ -257,7 +239,6 @@ public class FifteenPuzzleVisualizer extends JPanel {
             g.fillRect(0, 0, getWidth(), getHeight());
         }
 
-        // 2. Получаем маску правильных тайлов (через функцию логики)
         boolean[][] correctMask = null;
         if (logic != null) {
             try {
@@ -266,11 +247,9 @@ public class FifteenPuzzleVisualizer extends JPanel {
                 if (maskObj instanceof boolean[][])
                     correctMask = (boolean[][]) maskObj;
             } catch (Exception ex) {
-                // Нет такого метода — просто не отмечаем ничего
             }
         }
 
-        // 3. Клетки
         for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {
                 g.setColor(Color.LIGHT_GRAY);
@@ -278,7 +257,6 @@ public class FifteenPuzzleVisualizer extends JPanel {
             }
         }
 
-        // 4. Тайлы
         if (board != null) {
             for (int r = 0; r < size; r++) {
                 for (int c = 0; c < size; c++) {
@@ -295,7 +273,6 @@ public class FifteenPuzzleVisualizer extends JPanel {
                             g.drawImage(tileImages[value - 1], x + 2, y + 2, tileSize - 4, tileSize - 4, this);
                             g.setColor(isCorrect ? Color.GREEN : Color.GRAY);
                             g.drawRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
-                            // Более толстая рамка для правильных
                             if (isCorrect) {
                                 Graphics2D g2d = (Graphics2D) g;
                                 Stroke oldStroke = g2d.getStroke();

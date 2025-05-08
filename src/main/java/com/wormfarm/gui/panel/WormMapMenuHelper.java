@@ -38,7 +38,14 @@ public class WormMapMenuHelper {
         String saveName = dlg.getSelectedName();
         if (saveName != null) {
             try {
-                com.wormfarm.core.logic.WormSaveManager.save(worm, statsManager.getStats(), saveName);
+                // Теперь передаем targetX и targetY!
+                com.wormfarm.core.logic.WormSaveManager.save(
+                        worm,
+                        statsManager.getStats(),
+                        panel.getTargetX(),
+                        panel.getTargetY(),
+                        saveName
+                );
                 JOptionPane.showMessageDialog(panel, "Игра сохранена как '" + saveName + "'!");
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(panel, "Ошибка сохранения: " + ex.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
@@ -57,7 +64,13 @@ public class WormMapMenuHelper {
         String saveName = dlg.getSelectedName();
         if (saveName != null) {
             try {
-                com.wormfarm.core.logic.WormSaveManager.load(worm, statsManager.getStats(), saveName);
+                // Передаем TargetConsumer, чтобы восстановить targetX/targetY
+                com.wormfarm.core.logic.WormSaveManager.load(
+                        worm,
+                        statsManager.getStats(),
+                        panel::setTarget,
+                        saveName
+                );
                 JOptionPane.showMessageDialog(panel, "Игра '" + saveName + "' загружена!");
                 panel.repaint();
             } catch (Exception ex) {

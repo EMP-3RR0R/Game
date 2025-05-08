@@ -1,6 +1,10 @@
 package com.wormfarm.core.model;
 
-public class WormStats {
+import java.io.Serializable;
+
+public class WormStats implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int wormCoins;
 
     public WormStats(int initialCoins) {

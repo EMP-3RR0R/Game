@@ -66,12 +66,15 @@ public class MainApplicationFrame extends JFrame {
     }
 
     public void showMainMenu() {
+        List<String> saves = WormSaveManager.listSaves();
+        boolean hasSaves = !saves.isEmpty();
         setContentPane(new MainMenuPanel(
                 this::continueGame,
                 this::startNewGame,
                 this::loadGame,
                 this::openSettings,
-                this::exitGame
+                this::exitGame,
+                hasSaves // <--- передаем наличие сохранений
         ));
         revalidate();
         repaint();
@@ -107,7 +110,7 @@ public class MainApplicationFrame extends JFrame {
         } else {
             List<String> saves = WormSaveManager.listSaves();
             if (saves.isEmpty()) {
-                JOptionPane.showMessageDialog(this, messages.getString("no.saves.to.continue"));
+                JOptionPane.showMessageDialog(this, messages.getString("pause.no.saves"));
                 return;
             }
             loadSpecificGame(saves.get(saves.size() - 1));
@@ -136,12 +139,20 @@ public class MainApplicationFrame extends JFrame {
             currentEventMap = new EventMapModel();
             currentWormStats = new WormStats(0);
 
-            WormSaveManager.load(currentWormState, currentWormStats, saveName);
-
+            // При инициализации карты targetX/targetY будут по умолчанию.
+            // Восстанавливаем targetX/targetY после загрузки сохранения:
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
             currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager);
             currentMapPanel.setOnExitToMenu(this::showMainMenu);
+
+            // ВАЖНО: загружаем и восстанавливаем target позицию!
+            WormSaveManager.load(
+                    currentWormState,
+                    currentWormStats,
+                    currentMapPanel::setTarget,
+                    saveName
+            );
 
             setContentPane(currentMapPanel);
             revalidate();

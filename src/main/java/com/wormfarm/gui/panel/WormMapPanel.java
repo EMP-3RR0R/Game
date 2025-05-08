@@ -177,4 +177,14 @@ public class WormMapPanel extends JPanel {
         // Теперь menuHelper вызывает showPauseMenu с onExitToMenu и onLanguageChanged
         menuHelper.showPauseMenu(ownerFrame, onExitToMenu, onLanguageChanged);
     }
+
+    public int getTargetX() { return targetX; }
+
+    public int getTargetY() { return targetY; }
+
+    public void setTarget(int x, int y) {
+        targetX = Math.max(0, Math.min(FIELD_WIDTH, x));
+        targetY = Math.max(0, Math.min(FIELD_HEIGHT, y));
+        repaint();
+    }
 }

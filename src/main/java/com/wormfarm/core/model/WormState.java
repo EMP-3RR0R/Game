@@ -1,6 +1,10 @@
 package com.wormfarm.core.model;
 
-public class WormState {
+import java.io.Serializable;
+
+public class WormState implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private double x, y, direction;
 
     public static final int FIELD_WIDTH = 800;

@@ -47,7 +47,6 @@ public class FifteenPuzzleController {
                     int[][] after = game.getBoardCopy();
                     if (moved) {
                         SoundUtils.playSound("/sounds/click.wav");
-                        // Найти, какой тайл сдвинулся и куда
                         outer:
                         for (int r = 0; r < game.getSize(); r++) {
                             for (int c = 0; c < game.getSize(); c++) {
@@ -81,7 +80,6 @@ public class FifteenPuzzleController {
         game.addEventListener(new PuzzleEventListener() {
             @Override
             public void onMove(int x, int y, boolean success) {
-                // Не обновляем здесь визуализатор — этим занимается animateMove
             }
 
             @Override
@@ -92,17 +90,15 @@ public class FifteenPuzzleController {
         });
     }
 
-    // Новый package-private метод для обработки победы на EDT.
     void handleWinOnEdt() {
         if (wormStatsManager != null) {
             wormStatsManager.addCoins(10);
         }
-
         int moves = 0;
         long ms = 0;
         if (game instanceof ClassicFifteenPuzzleLogic) {
-            moves = ((ClassicFifteenPuzzleLogic) game).getMoveCount();
-            ms = ((ClassicFifteenPuzzleLogic) game).getElapsedTimeMillis();
+            moves = ((ClassicFifteenPuzzleLogic) game).getLastWinMoveCount();
+            ms = ((ClassicFifteenPuzzleLogic) game).getLastWinElapsedTime();
         }
         long sec = ms / 1000;
         long min = sec / 60;
@@ -123,7 +119,6 @@ public class FifteenPuzzleController {
                 options[0]
         );
         if (choice == 0) {
-            // Сыграть ещё: новая доска и новый спрайт!
             game.resetBoard();
             if (visualizer != null) {
                 visualizer.resetPuzzleImage();
@@ -132,7 +127,6 @@ public class FifteenPuzzleController {
             }
             gameOver = false;
         } else if (choice == 1) {
-            // Вернуться к приключениям: закрыть JDialog через Frame
             if (parentComponent instanceof FifteenPuzzleFrame) {
                 JDialog dlg = ((FifteenPuzzleFrame) parentComponent).getParentDialog();
                 if (dlg != null) dlg.dispose();
