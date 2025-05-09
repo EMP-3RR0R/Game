@@ -1,7 +1,6 @@
 package com.wormfarm.gui.base;
 
-import javax.swing.JInternalFrame;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 import java.util.Locale;
@@ -23,7 +22,7 @@ public abstract class BaseInternalFrame extends JInternalFrame {
     public BaseInternalFrame(String titleKey, boolean resizable, boolean closable,
                              boolean maximizable, boolean iconifiable) {
         super("", resizable, closable, maximizable, iconifiable);
-        updateLocale();
+        // updateLocale(); // УБРАТЬ этот вызов отсюда!
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         this.addInternalFrameListener(new InternalFrameAdapter() {
             @Override

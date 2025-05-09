@@ -2,6 +2,7 @@ package com.wormfarm.gui.panel;
 
 import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.gui.dialog.PauseMenuDialog;
 
 import javax.swing.*;
 import java.util.List;
@@ -17,10 +18,11 @@ public class WormMapMenuHelper {
         this.statsManager = statsManager;
     }
 
-    public void showPauseMenu(JFrame owner, Runnable onExitToMenu, Runnable onLanguageChanged) {
-        com.wormfarm.gui.dialog.PauseMenuDialog dlg = new com.wormfarm.gui.dialog.PauseMenuDialog(
+    public void showPauseMenu(JFrame owner, Runnable onResume, Runnable onExitToMenu, Runnable onLanguageChanged) {
+        JDesktopPane desktopPane = panel.getDesktopPane();
+        PauseMenuDialog pauseFrame = new PauseMenuDialog(
                 owner,
-                panel::requestFocusInWindow,
+                onResume, // <-- тут resumeGame!
                 () -> { if (onExitToMenu != null) onExitToMenu.run(); },
                 () -> System.exit(0),
                 this::saveGameWithName,
@@ -28,7 +30,16 @@ public class WormMapMenuHelper {
                 !com.wormfarm.core.logic.WormSaveManager.listSaves().isEmpty(),
                 onLanguageChanged
         );
-        dlg.setVisible(true);
+        if (desktopPane != null) {
+            int x = (desktopPane.getWidth() - pauseFrame.getWidth())/2;
+            int y = (desktopPane.getHeight() - pauseFrame.getHeight())/2;
+            pauseFrame.setLocation(Math.max(x,0), Math.max(y,0));
+            desktopPane.add(pauseFrame, JLayeredPane.POPUP_LAYER);
+            try { pauseFrame.setSelected(true); } catch (Exception ignored) {}
+            pauseFrame.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(owner, "Пауза работает только с desktopPane!");
+        }
     }
 
     private void saveGameWithName() {

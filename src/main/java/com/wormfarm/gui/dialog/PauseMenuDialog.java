@@ -1,19 +1,27 @@
 package com.wormfarm.gui.dialog;
 
+import com.wormfarm.gui.base.BaseInternalFrame;
 import com.wormfarm.settings.AppLocale;
 import com.wormfarm.settings.SettingsDialog;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.ResourceBundle;
 
-public class PauseMenuDialog extends JDialog {
+/**
+ * Меню паузы без рамки и перемещаемости, с корректной работой ESC и "Продолжить".
+ * Возобновление игры реализуется через onResumeCallback (panel::resumeGame).
+ */
+public class PauseMenuDialog extends BaseInternalFrame {
     private JButton btnResume;
     private JButton btnLoad;
     private JButton btnSave;
     private JButton btnSettings;
     private JButton btnExitToMenu;
     private JButton btnExitToDesktop;
+    private final Runnable onResumeCallback;
 
     public PauseMenuDialog(
             JFrame owner,
@@ -25,54 +33,67 @@ public class PauseMenuDialog extends JDialog {
             boolean loadEnabled,
             Runnable onLanguageChanged
     ) {
-        super(owner, ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale()).getString("pause.menu.title"), true);
+        super("pause.menu.title", false, true, false, false);
+
+        this.onResumeCallback = onResume;
+
+        // Убираем рамку и заголовок, запрещаем перемещение
+        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        setUI(new javax.swing.plaf.basic.BasicInternalFrameUI(this) {
+            @Override
+            protected void installComponents() {
+                // Не добавляем northPane (заголовок отсутствует)
+            }
+            @Override
+            protected void installListeners() {
+                // Не добавляем слушателей перемещения
+            }
+        });
+
+        JPanel content = new JPanel(new GridBagLayout());
 
         ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
-
-        setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridy = 0; gbc.insets = new Insets(10,0,10,0);
+        gbc.gridy = 0; gbc.insets = new Insets(10, 20, 10, 20);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         btnResume = new JButton(messages.getString("pause.resume"));
         btnResume.setPreferredSize(new Dimension(220, 36));
         btnResume.addActionListener(e -> {
             dispose();
-            if (onResume != null) onResume.run();
+            if (onResumeCallback != null) onResumeCallback.run();
         });
-        add(btnResume, gbc);
+        content.add(btnResume, gbc);
 
         gbc.gridy++;
         btnLoad = new JButton(messages.getString("pause.load"));
         btnLoad.setPreferredSize(new Dimension(220, 36));
         btnLoad.setEnabled(loadEnabled);
         btnLoad.addActionListener(e -> {
-            dispose();
             if (onLoad != null) onLoad.run();
         });
-        add(btnLoad, gbc);
+        content.add(btnLoad, gbc);
 
         gbc.gridy++;
         btnSave = new JButton(messages.getString("pause.save"));
         btnSave.setPreferredSize(new Dimension(220, 36));
         btnSave.addActionListener(e -> {
-            dispose();
             if (onSave != null) onSave.run();
         });
-        add(btnSave, gbc);
+        content.add(btnSave, gbc);
 
         gbc.gridy++;
         btnSettings = new JButton(messages.getString("pause.settings"));
         btnSettings.setPreferredSize(new Dimension(220, 36));
         btnSettings.addActionListener(e -> {
-            SettingsDialog settingsDialog = new SettingsDialog(this, () -> {
+            SettingsDialog settingsDialog = new SettingsDialog(owner, () -> {
                 updateTexts();
                 if (onLanguageChanged != null) onLanguageChanged.run();
             });
             settingsDialog.setLocationRelativeTo(this);
             settingsDialog.setVisible(true);
         });
-        add(btnSettings, gbc);
+        content.add(btnSettings, gbc);
 
         gbc.gridy++;
         btnExitToMenu = new JButton(messages.getString("pause.exit.menu"));
@@ -81,7 +102,7 @@ public class PauseMenuDialog extends JDialog {
             dispose();
             if (onExitToMenu != null) onExitToMenu.run();
         });
-        add(btnExitToMenu, gbc);
+        content.add(btnExitToMenu, gbc);
 
         gbc.gridy++;
         btnExitToDesktop = new JButton(messages.getString("pause.exit"));
@@ -89,14 +110,41 @@ public class PauseMenuDialog extends JDialog {
         btnExitToDesktop.addActionListener(e -> {
             if (onExitToDesktop != null) onExitToDesktop.run();
         });
-        add(btnExitToDesktop, gbc);
+        content.add(btnExitToDesktop, gbc);
 
-        pack();
-        setLocationRelativeTo(owner);
+        setContentPane(content);
+
+        setSize(260, 380);
+        setPreferredSize(new Dimension(260, 380));
+        setClosable(true);
         setResizable(false);
+        setIconifiable(false);
+        setMaximizable(false);
+
+        // ESC закрывает окно и возобновляет игру
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "closePauseMenu");
+        getRootPane().getActionMap().put("closePauseMenu", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+                if (onResumeCallback != null) onResumeCallback.run();
+            }
+        });
+
+        updateLocale();
     }
 
-    // Обновление текстов после смены языка
+    @Override
+    protected String getTitleKey() {
+        return "pause.menu.title";
+    }
+
+    @Override
+    protected void updateComponents() {
+        updateTexts();
+    }
+
     private void updateTexts() {
         ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
         setTitle(messages.getString("pause.menu.title"));

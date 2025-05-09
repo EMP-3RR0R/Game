@@ -175,9 +175,20 @@ public class WormMapPanel extends JPanel {
         WormMapRenderer.paintWholeMap(this, g, worm, mapModel, targetX, targetY, statsManager);
     }
 
+    public void pauseGame() {
+        setPaused(true);
+        timerRedraw.stop();
+        timerModel.stop();
+    }
+    public void resumeGame() {
+        setPaused(false);
+        timerRedraw.start();
+        timerModel.start();
+        requestFocusInWindow();
+    }
     private void showPauseMenu() {
-        // Теперь menuHelper вызывает showPauseMenu с onExitToMenu и onLanguageChanged
-        menuHelper.showPauseMenu(ownerFrame, onExitToMenu, onLanguageChanged);
+        pauseGame();
+        menuHelper.showPauseMenu(ownerFrame, this::resumeGame, onExitToMenu, onLanguageChanged);
     }
 
     public int getTargetX() { return targetX; }
