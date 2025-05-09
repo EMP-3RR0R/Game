@@ -10,6 +10,7 @@ import java.util.ResourceBundle;
 public class LoadGameDialog extends JDialog {
     ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
     private String selectedName = null;
+
     public LoadGameDialog(JFrame owner, List<String> names) {
         super(owner, ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale()).getString("load.dialog.title"), true);
         setLayout(new BorderLayout(10, 10));
@@ -45,7 +46,7 @@ public class LoadGameDialog extends JDialog {
         del.addActionListener(e -> {
             String name = savesList.getSelectedValue();
             if (name != null) {
-                int res = JOptionPane.showConfirmDialog(this, messages.getString("load.dialog.delete.confirm") + name + "'?", "load.dialog.delete.title", JOptionPane.YES_NO_OPTION);
+                int res = JOptionPane.showConfirmDialog(this, messages.getString("load.dialog.delete.confirm") + name + "'?", messages.getString("load.dialog.delete.title"), JOptionPane.YES_NO_OPTION);
                 if (res == JOptionPane.YES_OPTION) {
                     model.removeElement(name);
                     com.wormfarm.core.logic.WormSaveManager.deleteSave(name);
@@ -59,6 +60,7 @@ public class LoadGameDialog extends JDialog {
 
         add(btnPanel, BorderLayout.SOUTH);
 
+        setUndecorated(true);
         pack();
         setLocationRelativeTo(owner);
     }

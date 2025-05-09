@@ -28,6 +28,7 @@ public class SettingsDialog extends JDialog {
         JLabel labelLang = new JLabel(messages.getString("settings.language"));
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 1;
         add(labelLang, gbc);
 
         langCombo = new JComboBox<>(langMap.keySet().toArray(new String[0]));
@@ -45,19 +46,30 @@ public class SettingsDialog extends JDialog {
             idx++;
         }
 
+        // Кнопки "Сохранить" и "Отмена"
+        JPanel btnPanel = new JPanel();
         JButton btnSave = new JButton(messages.getString("settings.save"));
+        JButton btnCancel = new JButton(messages.getString("settings.cancel"));
+        btnPanel.add(btnSave);
+        btnPanel.add(btnCancel);
+
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        add(btnPanel, gbc);
+
         btnSave.addActionListener(e -> {
             String selectedLang = langMap.get((String) langCombo.getSelectedItem());
             AppLocale.setLocale(selectedLang);
             dispose();
             if (onLanguageChange != null) onLanguageChange.run();
         });
-        add(btnSave, gbc);
+        btnCancel.addActionListener(e -> dispose());
 
+        setUndecorated(true);
         pack();
         setResizable(false);
+        setLocationRelativeTo(owner);
     }
 }

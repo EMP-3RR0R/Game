@@ -59,6 +59,7 @@ public class SaveGameDialog extends JDialog {
 
         add(btnPanel, BorderLayout.SOUTH);
 
+        setUndecorated(true);
         pack();
         setLocationRelativeTo(owner);
     }
