@@ -22,6 +22,8 @@ public class WormMapPanel extends JPanel {
     private final JFrame ownerFrame;
     private final WormStatsManager statsManager;
 
+    private JDesktopPane desktopPane;
+
     private volatile int targetX = 150;
     private volatile int targetY = 100;
     private volatile boolean paused = false;
@@ -186,5 +188,13 @@ public class WormMapPanel extends JPanel {
         targetX = Math.max(0, Math.min(FIELD_WIDTH, x));
         targetY = Math.max(0, Math.min(FIELD_HEIGHT, y));
         repaint();
+    }
+
+    public void setDesktopPane(JDesktopPane desktopPane) {
+        this.desktopPane = desktopPane;
+    }
+
+    public JDesktopPane getDesktopPane() {
+        return desktopPane;
     }
 }

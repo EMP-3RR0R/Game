@@ -9,15 +9,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-
 
 public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     private static final int SIZE = 4;
     private static final int TILE_SIZE = 100;
-
-    private JDialog parentDialog;
 
     private final ClassicFifteenPuzzleLogic logic;
     private final FifteenPuzzleVisualizer visualizer;
@@ -27,38 +22,12 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     private final JLabel movesLabel = new JLabel("Ходы: 0");
     private final Timer uiTimer;
 
-    // --- Новое поле для менеджера статистики ---
-    private final WormStatsManager wormStatsManager;
-
-    // Новый конструктор, передающий WormStatsManager извне
     public FifteenPuzzleFrame(WormStatsManager wormStatsManager) {
         super("puzzle.title", wormStatsManager);
-        System.out.println("here");
-
-        this.wormStatsManager = wormStatsManager;
 
         logic = new ClassicFifteenPuzzleLogic(SIZE);
         visualizer = new FifteenPuzzleVisualizer(SIZE, TILE_SIZE, logic);
         controller = new FifteenPuzzleController(logic, visualizer, this, wormStatsManager);
-
-        // --- Гарантированная обработка ESC, даже если фокус не на нужном компоненте ---
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
-            @Override
-            public boolean dispatchKeyEvent(KeyEvent e) {
-                if (e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-                    System.out.println("dkdf");
-                    if (controller.isPausedGame()) {
-                        controller.resumeGame();
-                    } else {
-                        controller.pauseGame();
-                        showPauseMenu();
-                    }
-                }
-                return false;
-            }
-        });
-
-
 
         setLayout(new BorderLayout());
 
@@ -99,10 +68,10 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
         setPreferredSize(new Dimension(SIZE * TILE_SIZE + 20, SIZE * TILE_SIZE + 120));
         setMinimumSize(new Dimension(SIZE * TILE_SIZE + 20, SIZE * TILE_SIZE + 120));
         setMaximumSize(new Dimension(SIZE * TILE_SIZE + 20, SIZE * TILE_SIZE + 120));
-        setResizable(false); // Prevent resizing
+        setResizable(false);
 
         visualizer.setBoard(logic.getBoardCopy());
-        visualizer.resetPuzzleImage(); // First sprite when starting
+        visualizer.resetPuzzleImage();
 
         uiTimer = new Timer(500, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -110,6 +79,8 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
             }
         });
         uiTimer.start();
+
+        startGame();
     }
 
     public FifteenPuzzleFrame() {
@@ -125,14 +96,6 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
         movesLabel.setText("Ходы: " + logic.getMoveCount());
     }
 
-    public void setParentDialog(JDialog dialog) {
-        this.parentDialog = dialog;
-    }
-
-    public JDialog getParentDialog() {
-        return parentDialog;
-    }
-
     @Override
     protected String getTitleKey() {
         return "puzzle.title";
@@ -140,7 +103,7 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
 
     @Override
     protected void updateComponents() {
-        // Update localization and other components if needed
+        // Можно обновить локализацию здесь
     }
 
     @Override
@@ -169,6 +132,7 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
         uiTimer.start();
         logic.resumeGame();
     }
+
     @Override
     public void endGame() {
         uiTimer.stop();

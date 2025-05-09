@@ -10,7 +10,6 @@ import com.wormfarm.settings.AppLocale;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -70,39 +69,50 @@ public class WormMapEventManager {
         if (marker.getDescription().equals("Пятнашки")) {
             panel.setPaused(true);
             SwingUtilities.invokeLater(() -> {
+                JDesktopPane desktopPane = panel.getDesktopPane();
+                if (desktopPane == null) {
+                    JOptionPane.showMessageDialog(ownerFrame, "Ошибка: desktopPane не найден!");
+                    if (onClose != null) onClose.run();
+                    return;
+                }
+
                 FifteenPuzzleFrame puzzleFrame = (statsManager != null)
                         ? new FifteenPuzzleFrame(statsManager)
                         : new FifteenPuzzleFrame();
-                JDialog dialog = new JDialog(ownerFrame, "Пятнашки", true);
-                puzzleFrame.setParentDialog(dialog);
 
-                dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-                dialog.setContentPane(puzzleFrame.getContentPane());
-                dialog.setSize(puzzleFrame.getPreferredSize());
-                dialog.setResizable(false);
-                dialog.setLocationRelativeTo(ownerFrame);
+                puzzleFrame.setClosable(true);
+                puzzleFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-                dialog.addWindowListener(new WindowAdapter() {
+                puzzleFrame.addInternalFrameListener(new javax.swing.event.InternalFrameAdapter() {
                     @Override
-                    public void windowClosing(WindowEvent e) {
+                    public void internalFrameClosing(javax.swing.event.InternalFrameEvent e) {
                         int confirm = JOptionPane.showConfirmDialog(
-                                dialog,
+                                puzzleFrame,
                                 messages.getString("puzzle.confirm.exit") + "\n" + messages.getString("puzzle.progress.lost"),
                                 messages.getString("puzzle.confirm.exit.title"),
                                 JOptionPane.YES_NO_OPTION,
                                 JOptionPane.WARNING_MESSAGE
                         );
                         if (confirm == JOptionPane.YES_OPTION) {
-                            dialog.dispose();
+                            puzzleFrame.dispose();
                         }
                     }
                     @Override
-                    public void windowClosed(WindowEvent e) {
+                    public void internalFrameClosed(javax.swing.event.InternalFrameEvent e) {
                         if (onClose != null) onClose.run();
                     }
                 });
 
-                dialog.setVisible(true);
+                desktopPane.add(puzzleFrame, JLayeredPane.MODAL_LAYER);
+                puzzleFrame.setVisible(true);
+                try {
+                    puzzleFrame.setSelected(true);
+                } catch (Exception ignored) {}
+
+                // Центрируем
+                int x = (desktopPane.getWidth() - puzzleFrame.getWidth()) / 2;
+                int y = (desktopPane.getHeight() - puzzleFrame.getHeight()) / 2;
+                puzzleFrame.setLocation(Math.max(0, x), Math.max(0, y));
             });
         }
         // Можно добавить обработку других событий

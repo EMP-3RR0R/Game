@@ -13,9 +13,6 @@ public class SettingsDialog extends JDialog {
     private final Map<String, String> langMap = new LinkedHashMap<>() {{
         put("English", "en");
         put("Русский", "ru");
-        put("Deutsch", "de");
-        put("Français", "fr");
-        put("Español", "es");
     }};
 
     public SettingsDialog(Window owner, Runnable onLanguageChange) {

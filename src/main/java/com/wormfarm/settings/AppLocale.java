@@ -4,7 +4,7 @@ import java.util.Locale;
 import java.util.Set;
 
 public class AppLocale {
-    private static final Set<String> SUPPORTED_LANGS = Set.of("en", "ru", "de", "fr", "es");
+    private static final Set<String> SUPPORTED_LANGS = Set.of("en", "ru");
     private static Locale currentLocale = detectDefaultLocale();
 
     private static Locale detectDefaultLocale() {
@@ -13,9 +13,6 @@ public class AppLocale {
         if (SUPPORTED_LANGS.contains(lang)) {
             return switch (lang) {
                 case "ru" -> new Locale("ru", "RU");
-                case "de" -> new Locale("de", "DE");
-                case "fr" -> new Locale("fr", "FR");
-                case "es" -> new Locale("es", "ES");
                 default -> new Locale("en", "EN");
             };
         } else {
@@ -31,9 +28,6 @@ public class AppLocale {
     public static void setLocale(String language) {
         currentLocale = switch (language) {
             case "ru" -> new Locale("ru", "RU");
-            case "de" -> new Locale("de", "DE");
-            case "fr" -> new Locale("fr", "FR");
-            case "es" -> new Locale("es", "ES");
             default -> new Locale("en", "EN");
         };
     }

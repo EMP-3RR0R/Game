@@ -9,10 +9,11 @@ import com.wormfarm.gui.dialog.LoadGameDialog;
 import com.wormfarm.gui.panel.MainMenuPanel;
 import com.wormfarm.gui.panel.WormMapPanel;
 import com.wormfarm.settings.AppLocale;
-import com.wormfarm.settings.SettingsDialog;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -62,6 +63,16 @@ public class MainApplicationFrame extends JFrame {
         pack();
         setLocationRelativeTo(null);
 
+        // Обеспечить правильное масштабирование карты при ресайзе desktopPane (если вдруг будет resizable=true)
+        desktopPane.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (currentMapPanel != null) {
+                    currentMapPanel.setBounds(0, 0, desktopPane.getWidth(), desktopPane.getHeight());
+                }
+            }
+        });
+
         showMainMenu();
     }
 
@@ -74,7 +85,7 @@ public class MainApplicationFrame extends JFrame {
                 this::loadGame,
                 this::openSettings,
                 this::exitGame,
-                hasSaves // <--- передаем наличие сохранений
+                hasSaves
         ));
         revalidate();
         repaint();
@@ -88,12 +99,10 @@ public class MainApplicationFrame extends JFrame {
         WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
         currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager);
+        currentMapPanel.setDesktopPane(desktopPane);
         currentMapPanel.setOnExitToMenu(this::showMainMenu);
 
-        setContentPane(currentMapPanel);
-        revalidate();
-        repaint();
-        currentMapPanel.requestFocusInWindow();
+        showMapPanel();
     }
 
     public void continueGame() {
@@ -101,12 +110,10 @@ public class MainApplicationFrame extends JFrame {
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
             currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager);
+            currentMapPanel.setDesktopPane(desktopPane);
             currentMapPanel.setOnExitToMenu(this::showMainMenu);
 
-            setContentPane(currentMapPanel);
-            revalidate();
-            repaint();
-            currentMapPanel.requestFocusInWindow();
+            showMapPanel();
         } else {
             List<String> saves = WormSaveManager.listSaves();
             if (saves.isEmpty()) {
@@ -139,14 +146,12 @@ public class MainApplicationFrame extends JFrame {
             currentEventMap = new EventMapModel();
             currentWormStats = new WormStats(0);
 
-            // При инициализации карты targetX/targetY будут по умолчанию.
-            // Восстанавливаем targetX/targetY после загрузки сохранения:
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
             currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager);
+            currentMapPanel.setDesktopPane(desktopPane);
             currentMapPanel.setOnExitToMenu(this::showMainMenu);
 
-            // ВАЖНО: загружаем и восстанавливаем target позицию!
             WormSaveManager.load(
                     currentWormState,
                     currentWormStats,
@@ -154,15 +159,23 @@ public class MainApplicationFrame extends JFrame {
                     saveName
             );
 
-            setContentPane(currentMapPanel);
-            revalidate();
-            repaint();
-            currentMapPanel.requestFocusInWindow();
+            showMapPanel();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this,
                     messages.getString("error.load.save") + ": " + e.getMessage());
         }
+    }
+
+    private void showMapPanel() {
+        desktopPane.removeAll();
+        currentMapPanel.setBounds(0, 0, desktopPane.getWidth(), desktopPane.getHeight());
+        desktopPane.add(currentMapPanel, JLayeredPane.DEFAULT_LAYER);
+        setContentPane(desktopPane);
+
+        revalidate();
+        repaint();
+        currentMapPanel.requestFocusInWindow();
     }
 
     public void openSettings() {

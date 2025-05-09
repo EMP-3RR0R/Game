@@ -127,9 +127,11 @@ public class FifteenPuzzleController {
             }
             gameOver = false;
         } else if (choice == 1) {
+            // Закрыть internal frame, если мини-игра запущена как internal frame
             if (parentComponent instanceof FifteenPuzzleFrame) {
-                JDialog dlg = ((FifteenPuzzleFrame) parentComponent).getParentDialog();
-                if (dlg != null) dlg.dispose();
+                ((FifteenPuzzleFrame) parentComponent).dispose();
+            } else if (parentComponent instanceof JInternalFrame) {
+                ((JInternalFrame) parentComponent).dispose();
             }
         }
     }

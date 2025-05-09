@@ -10,8 +10,8 @@ import java.awt.event.KeyEvent;
 public abstract class BaseMiniGameFrame extends BaseInternalFrame {
     protected final WormStatsManager wormStatsManager;
 
-    public BaseMiniGameFrame(String titelKey, WormStatsManager wormStatsManager) {
-        super(titelKey, true, true, true, true);
+    public BaseMiniGameFrame(String titleKey, WormStatsManager wormStatsManager) {
+        super(titleKey, true, true, true, true);
         this.wormStatsManager = wormStatsManager;
         addKeyListener(new KeyAdapter() {
             @Override
@@ -36,11 +36,11 @@ public abstract class BaseMiniGameFrame extends BaseInternalFrame {
                 new String[]{"Продолжить", "Завершить игру"},
                 "Продолжить"
         );
-
         if (option == 0) {
             resumeGame();
         } else if (option == 1) {
             endGame();
+            dispose();
         }
     }
 
