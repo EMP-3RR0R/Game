@@ -6,13 +6,17 @@ import com.wormfarm.gui.base.BaseInternalFrame;
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ResourceBundle;
+import com.wormfarm.settings.AppLocale;
 
 public abstract class BaseMiniGameFrame extends BaseInternalFrame {
     protected final WormStatsManager wormStatsManager;
+    protected ResourceBundle messages;
 
     public BaseMiniGameFrame(String titleKey, WormStatsManager wormStatsManager) {
-        super(titleKey, true, true, true, true);
+        super(getLocalizedString(titleKey), true, true, true, true);
         this.wormStatsManager = wormStatsManager;
+        this.messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -28,13 +32,16 @@ public abstract class BaseMiniGameFrame extends BaseInternalFrame {
         pauseGame();
         int option = JOptionPane.showOptionDialog(
                 this,
-                "Игра на паузе. Что вы хотите сделать?",
-                "Пауза",
+                messages.getString("minigame.pause.message"),
+                messages.getString("minigame.pause.title"),
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
                 null,
-                new String[]{"Продолжить", "Завершить игру"},
-                "Продолжить"
+                new String[]{
+                        messages.getString("minigame.pause.continue"),
+                        messages.getString("minigame.pause.quit")
+                },
+                messages.getString("minigame.pause.continue")
         );
         if (option == 0) {
             resumeGame();
@@ -42,6 +49,20 @@ public abstract class BaseMiniGameFrame extends BaseInternalFrame {
             endGame();
             dispose();
         }
+    }
+
+    public static String getLocalizedString(String key) {
+        try {
+            ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
+            return messages.getString(key);
+        } catch (Exception e) {
+            return key;
+        }
+    }
+
+    public void updateLocale() {
+        this.messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
+        setTitle(getLocalizedString(getTitle()));
     }
 
     public abstract void startGame();

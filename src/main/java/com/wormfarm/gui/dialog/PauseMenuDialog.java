@@ -3,6 +3,7 @@ package com.wormfarm.gui.dialog;
 import com.wormfarm.gui.base.BaseInternalFrame;
 import com.wormfarm.settings.AppLocale;
 import com.wormfarm.settings.SettingsDialog;
+import com.wormfarm.settings.UserSettings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,10 +11,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ResourceBundle;
 
-/**
- * Меню паузы без рамки и перемещаемости, с корректной работой ESC и "Продолжить".
- * Возобновление игры реализуется через onResumeCallback (panel::resumeGame).
- */
 public class PauseMenuDialog extends BaseInternalFrame {
     private JButton btnResume;
     private JButton btnLoad;
@@ -22,6 +19,8 @@ public class PauseMenuDialog extends BaseInternalFrame {
     private JButton btnExitToMenu;
     private JButton btnExitToDesktop;
     private final Runnable onResumeCallback;
+    private final UserSettings settings;
+    private final Runnable onLanguageChanged;
 
     public PauseMenuDialog(
             JFrame owner,
@@ -31,11 +30,14 @@ public class PauseMenuDialog extends BaseInternalFrame {
             Runnable onSave,
             Runnable onLoad,
             boolean loadEnabled,
-            Runnable onLanguageChanged
+            Runnable onLanguageChanged,
+            UserSettings settings
     ) {
         super("pause.menu.title", false, true, false, false);
 
         this.onResumeCallback = onResume;
+        this.onLanguageChanged = onLanguageChanged;
+        this.settings = settings;
 
         // Убираем рамку и заголовок, запрещаем перемещение
         setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
@@ -88,8 +90,8 @@ public class PauseMenuDialog extends BaseInternalFrame {
         btnSettings.addActionListener(e -> {
             SettingsDialog settingsDialog = new SettingsDialog(owner, () -> {
                 updateTexts();
-                if (onLanguageChanged != null) onLanguageChanged.run();
-            });
+                if (this.onLanguageChanged != null) this.onLanguageChanged.run();
+            }, settings);
             settingsDialog.setLocationRelativeTo(this);
             settingsDialog.setVisible(true);
         });

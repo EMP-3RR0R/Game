@@ -8,13 +8,15 @@ import com.wormfarm.core.logic.WormStatsManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.util.ResourceBundle;
 
 public class WormMapRenderer {
     private WormMapRenderer() {}
 
     public static void paintWholeMap(
             JPanel panel, Graphics g, WormState worm, EventMapModel mapModel,
-            int targetX, int targetY, WormStatsManager statsManager
+            int targetX, int targetY, WormStatsManager statsManager,
+            ResourceBundle messages
     ) {
         Graphics2D g2d = (Graphics2D) g.create();
 
@@ -29,7 +31,7 @@ public class WormMapRenderer {
         drawTarget(g2d, targetX, targetY);
 
         for (EventMarker marker : mapModel.getMarkers()) {
-            if ("Пятнашки".equals(marker.getDescription())) {
+            if ("puzzle.title".equals(marker.getDescription())) {
                 drawFifteenPuzzleIcon(g2d, marker);
             } else {
                 drawMarker(g2d, marker);

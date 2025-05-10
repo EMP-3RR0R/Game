@@ -2,6 +2,7 @@ package com.wormfarm.gui.panel;
 
 import com.wormfarm.settings.AppLocale;
 import com.wormfarm.settings.SettingsDialog;
+import com.wormfarm.settings.UserSettings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,7 +10,7 @@ import java.util.ResourceBundle;
 
 public class MainMenuPanel extends JPanel {
 
-    public MainMenuPanel(Runnable onContinue, Runnable onNewGame, Runnable onLoadGame, Runnable onSettings, Runnable onExit, boolean hasSaves) {
+    public MainMenuPanel(Runnable onContinue, Runnable onNewGame, Runnable onLoadGame, Runnable onSettings, Runnable onExit, boolean hasSaves, UserSettings settings) {
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridy = 0;
@@ -50,10 +51,12 @@ public class MainMenuPanel extends JPanel {
 
         this.settingsDialog = null;
         this.onSettings = onSettings;
+        this.settings = settings;
     }
 
     private JDialog settingsDialog;
     private Runnable onSettings;
+    private final UserSettings settings;
 
     private void showSettingsDialog() {
         if (settingsDialog != null && settingsDialog.isShowing()) {
@@ -63,7 +66,7 @@ public class MainMenuPanel extends JPanel {
         settingsDialog = new SettingsDialog(SwingUtilities.getWindowAncestor(this), () -> {
             updateTexts();
             if (onSettings != null) onSettings.run();
-        });
+        }, settings);
         settingsDialog.setLocationRelativeTo(this);
         settingsDialog.setVisible(true);
     }

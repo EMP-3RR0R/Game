@@ -8,16 +8,8 @@ public class AppLocale {
     private static Locale currentLocale = detectDefaultLocale();
 
     private static Locale detectDefaultLocale() {
-        Locale sys = Locale.getDefault();
-        String lang = sys.getLanguage();
-        if (SUPPORTED_LANGS.contains(lang)) {
-            return switch (lang) {
-                case "ru" -> new Locale("ru", "RU");
-                default -> new Locale("en", "EN");
-            };
-        } else {
-            return new Locale("en", "EN");
-        }
+        String lang = Locale.getDefault().getLanguage();
+        return getSupportedLocale(lang);
     }
 
     public static String detectDefaultLocaleLang() {
@@ -26,13 +18,18 @@ public class AppLocale {
     }
 
     public static void setLocale(String language) {
-        currentLocale = switch (language) {
-            case "ru" -> new Locale("ru", "RU");
-            default -> new Locale("en", "EN");
-        };
+        currentLocale = getSupportedLocale(language);
     }
 
     public static Locale getLocale() {
         return currentLocale;
+    }
+
+    private static Locale getSupportedLocale(String language) {
+        return switch (language) {
+            case "ru" -> new Locale("ru", "RU");
+            case "en" -> new Locale("en", "US");
+            default -> new Locale("en", "US");
+        };
     }
 }

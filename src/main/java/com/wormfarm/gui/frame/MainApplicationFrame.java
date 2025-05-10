@@ -8,7 +8,9 @@ import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.gui.dialog.LoadGameDialog;
 import com.wormfarm.gui.panel.MainMenuPanel;
 import com.wormfarm.gui.panel.WormMapPanel;
+import com.wormfarm.gui.panel.WormMapMenuHelper;
 import com.wormfarm.settings.AppLocale;
+import com.wormfarm.settings.UserSettings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +18,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -31,9 +34,35 @@ public class MainApplicationFrame extends JFrame {
     private WormStats currentWormStats;
     private EventMapModel currentEventMap;
     private WormMapPanel currentMapPanel;
+    private UserSettings settings;
 
     public MainApplicationFrame() {
-        AppLocale.setLocale(AppLocale.detectDefaultLocaleLang());
+        // 1. Загрузка настроек пользователя
+        try {
+            File settingsFile = new File("user.settings");
+            if (settingsFile.exists()) {
+                settings = UserSettings.load(settingsFile);
+            } else {
+                settings = new UserSettings();
+                // Можно инициализировать язык автодетектом если еще нет значения
+                if (settings.getLanguage() == null || settings.getLanguage().isEmpty()) {
+                    String defaultLang = AppLocale.detectDefaultLocaleLang();
+                    settings.setLanguage(defaultLang);
+                    UserSettings.save(settings, settingsFile);
+                }
+            }
+        } catch (Exception e) {
+            settings = new UserSettings();
+            if (settings.getLanguage() == null || settings.getLanguage().isEmpty()) {
+                String defaultLang = AppLocale.detectDefaultLocaleLang();
+                settings.setLanguage(defaultLang);
+            }
+        }
+
+        // 2. Устанавливаем локаль приложения по настройкам пользователя
+        AppLocale.setLocale(settings.getLanguage());
+
+        // 3. Только теперь инициализируем messages
         messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
 
         setTitle("Worm Farm");
@@ -85,7 +114,8 @@ public class MainApplicationFrame extends JFrame {
                 this::loadGame,
                 this::openSettings,
                 this::exitGame,
-                hasSaves
+                hasSaves,
+                settings // обязательно передаём настройки!
         ));
         revalidate();
         repaint();
@@ -98,7 +128,7 @@ public class MainApplicationFrame extends JFrame {
 
         WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
-        currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager);
+        currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager, settings); // передаем настройки
         currentMapPanel.setDesktopPane(desktopPane);
         currentMapPanel.setOnExitToMenu(this::showMainMenu);
 
@@ -109,7 +139,7 @@ public class MainApplicationFrame extends JFrame {
         if (currentWormState != null && currentWormStats != null) {
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
-            currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager);
+            currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager, settings);
             currentMapPanel.setDesktopPane(desktopPane);
             currentMapPanel.setOnExitToMenu(this::showMainMenu);
 
@@ -148,7 +178,7 @@ public class MainApplicationFrame extends JFrame {
 
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
-            currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager);
+            currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, this, statsManager, settings);
             currentMapPanel.setDesktopPane(desktopPane);
             currentMapPanel.setOnExitToMenu(this::showMainMenu);
 

@@ -4,14 +4,18 @@ import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.model.EventMapModel;
 import com.wormfarm.core.model.EventMarker;
 import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.settings.UserSettings;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.text.MessageFormat;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ResourceBundle;
+import java.util.Locale;
 
 public class WormMapPanel extends JPanel {
     public static final int FIELD_WIDTH = 800 - 16;
@@ -47,14 +51,25 @@ public class WormMapPanel extends JPanel {
     private final WormMapEventManager eventManager;
     private final WormMapMenuHelper menuHelper;
 
-    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame, WormStatsManager statsManager) {
+    private final UserSettings settings;
+    private ResourceBundle messages;
+
+    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame, WormStatsManager statsManager, UserSettings settings) {
         this.worm = worm;
         this.mapModel = mapModel;
         this.ownerFrame = ownerFrame;
         this.statsManager = statsManager;
+        this.settings = settings;
 
-        this.eventManager = new WormMapEventManager(this, worm, mapModel, activeMarkers, recentlyActivated);
-        this.menuHelper = new WormMapMenuHelper(this, worm, statsManager);
+        this.messages = ResourceBundle.getBundle(
+                "com.wormfarm.gui.messages",
+                settings != null && settings.getLanguage() != null
+                        ? new Locale(settings.getLanguage())
+                        : Locale.getDefault()
+        );
+
+        this.eventManager = new WormMapEventManager(this, worm, mapModel, activeMarkers, recentlyActivated, messages);
+        this.menuHelper = new WormMapMenuHelper(this, worm, statsManager, settings);
 
         setPreferredSize(new Dimension(FIELD_WIDTH, FIELD_HEIGHT));
         setFocusable(true);
@@ -107,7 +122,8 @@ public class WormMapPanel extends JPanel {
         });
 
         setDoubleBuffered(true);
-        mapModel.addMarker(new EventMarker(200, 200, "Пятнашки"));
+        // Теперь храним КЛЮЧ ресурса!
+        mapModel.addMarker(new EventMarker(200, 200, "puzzle.title"));
 
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
                 .put(KeyStroke.getKeyStroke("ESCAPE"), "showPauseMenu");
@@ -121,8 +137,12 @@ public class WormMapPanel extends JPanel {
         SwingUtilities.invokeLater(this::requestFocusInWindow);
     }
 
+    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame, WormStatsManager statsManager) {
+        this(worm, mapModel, ownerFrame, statsManager, null);
+    }
+
     public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame) {
-        this(worm, mapModel, ownerFrame, null);
+        this(worm, mapModel, ownerFrame, null, null);
     }
 
     public void dispose() {
@@ -145,10 +165,16 @@ public class WormMapPanel extends JPanel {
 
     void tryActivateEvent(EventMarker marker) {
         paused = true;
+        // Получаем локализованный заголовок по ключу!
+        String eventTitle = messages.getString(marker.getDescription());
+        String confirmMessage = MessageFormat.format(
+                messages.getString("challenge.confirm.message"),
+                eventTitle
+        );
         int result = JOptionPane.showConfirmDialog(
                 this,
-                "Хотите начать испытание \"" + marker.getDescription() + "\"?",
-                "Испытание",
+                confirmMessage,
+                messages.getString("challenge.confirm.title"),
                 JOptionPane.YES_NO_OPTION
         );
         paused = false;
@@ -172,7 +198,7 @@ public class WormMapPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        WormMapRenderer.paintWholeMap(this, g, worm, mapModel, targetX, targetY, statsManager);
+        WormMapRenderer.paintWholeMap(this, g, worm, mapModel, targetX, targetY, statsManager, messages);
     }
 
     public void pauseGame() {
@@ -180,12 +206,29 @@ public class WormMapPanel extends JPanel {
         timerRedraw.stop();
         timerModel.stop();
     }
+
     public void resumeGame() {
         setPaused(false);
         timerRedraw.start();
         timerModel.start();
         requestFocusInWindow();
     }
+
+    /**
+     * Переподгружает локализацию. Вызывать при смене языка.
+     */
+    public void updateLocale() {
+        Locale locale = settings != null && settings.getLanguage() != null
+                ? new Locale(settings.getLanguage())
+                : Locale.getDefault();
+        this.messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", locale);
+        repaint();
+    }
+
+    public ResourceBundle getMessages() {
+        return messages;
+    }
+
     private void showPauseMenu() {
         pauseGame();
         menuHelper.showPauseMenu(ownerFrame, this::resumeGame, onExitToMenu, onLanguageChanged);

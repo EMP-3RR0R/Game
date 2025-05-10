@@ -21,20 +21,24 @@ public class WormMapEventManager {
     private final Set<EventMarker> activeMarkers;
     private final Map<EventMarker, Long> recentlyActivated;
 
-    private final ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
-
     public WormMapEventManager(
             WormMapPanel panel,
             WormState worm,
             EventMapModel mapModel,
             Set<EventMarker> activeMarkers,
-            Map<EventMarker, Long> recentlyActivated
+            Map<EventMarker, Long> recentlyActivated,
+            ResourceBundle messages // оставлено для совместимости сигнатуры
     ) {
         this.panel = panel;
         this.worm = worm;
         this.mapModel = mapModel;
         this.activeMarkers = activeMarkers;
         this.recentlyActivated = recentlyActivated;
+    }
+
+    // Utility ― всегда свежий ResourceBundle!
+    private ResourceBundle getMessages() {
+        return ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
     }
 
     public void updateWormAndEvents(int targetX, int targetY, boolean paused) {
@@ -66,37 +70,39 @@ public class WormMapEventManager {
     }
 
     public void activateEvent(EventMarker marker, JFrame ownerFrame, WormStatsManager statsManager, Runnable onClose) {
-        if (marker.getDescription().equals("Пятнашки")) {
+        ResourceBundle messages = getMessages();
+
+        if ("puzzle.title".equals(marker.getDescription())) {
             panel.setPaused(true);
             SwingUtilities.invokeLater(() -> {
                 JDesktopPane desktopPane = panel.getDesktopPane();
                 if (desktopPane == null) {
-                    JOptionPane.showMessageDialog(ownerFrame, "Ошибка: desktopPane не найден!");
+                    JOptionPane.showMessageDialog(ownerFrame, messages.getString("error.no_desktop_pane"));
                     if (onClose != null) onClose.run();
                     return;
                 }
 
                 FifteenPuzzleFrame puzzleFrame = (statsManager != null)
-                        ? new FifteenPuzzleFrame(statsManager)
+                        ? new FifteenPuzzleFrame(statsManager, null)
                         : new FifteenPuzzleFrame();
 
                 puzzleFrame.setClosable(true);
                 puzzleFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
+                // --- только через customCloseHandler! ---
+                puzzleFrame.setCustomCloseHandler(frame -> {
+                    int confirm = JOptionPane.showConfirmDialog(
+                            frame,
+                            messages.getString("puzzle.confirm.exit") + "\n" + messages.getString("puzzle.progress.lost"),
+                            messages.getString("puzzle.confirm.exit.title"),
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    // Если пользователь выбрал "Да" — закрыть окно, иначе ничего не делать
+                    return confirm == JOptionPane.YES_OPTION;
+                });
+
                 puzzleFrame.addInternalFrameListener(new javax.swing.event.InternalFrameAdapter() {
-                    @Override
-                    public void internalFrameClosing(javax.swing.event.InternalFrameEvent e) {
-                        int confirm = JOptionPane.showConfirmDialog(
-                                puzzleFrame,
-                                messages.getString("puzzle.confirm.exit") + "\n" + messages.getString("puzzle.progress.lost"),
-                                messages.getString("puzzle.confirm.exit.title"),
-                                JOptionPane.YES_NO_OPTION,
-                                JOptionPane.WARNING_MESSAGE
-                        );
-                        if (confirm == JOptionPane.YES_OPTION) {
-                            puzzleFrame.dispose();
-                        }
-                    }
                     @Override
                     public void internalFrameClosed(javax.swing.event.InternalFrameEvent e) {
                         if (onClose != null) onClose.run();

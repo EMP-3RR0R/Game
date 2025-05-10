@@ -4,19 +4,22 @@ import com.wormfarm.minigames.fifteenpuzzle.api.FifteenPuzzleGame;
 import com.wormfarm.minigames.fifteenpuzzle.events.PuzzleEventListener;
 import com.wormfarm.minigames.fifteenpuzzle.logic.ClassicFifteenPuzzleLogic;
 import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.util.SoundUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.MessageFormat;
+import java.util.ResourceBundle;
 
 public class FifteenPuzzleController {
     private final FifteenPuzzleGame game;
     private final FifteenPuzzleVisualizer visualizer;
     private final Component parentComponent;
     private final WormStatsManager wormStatsManager;
+    private final FifteenPuzzleFrame frame;
     private boolean gameOver = false;
-
     private boolean isPaused = false;
 
     public void pauseGame() {
@@ -27,17 +30,17 @@ public class FifteenPuzzleController {
         isPaused = false;
     }
 
-    public FifteenPuzzleController(FifteenPuzzleGame game, FifteenPuzzleVisualizer visualizer, Component parentComponent, WormStatsManager wormStatsManager) {
+    public FifteenPuzzleController(FifteenPuzzleGame game, FifteenPuzzleVisualizer visualizer, Component parentComponent, WormStatsManager wormStatsManager, FifteenPuzzleFrame frame) {
         this.game = game;
         this.visualizer = visualizer;
         this.parentComponent = parentComponent;
         this.wormStatsManager = wormStatsManager;
+        this.frame = frame;
 
         visualizer.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (isPaused || gameOver || visualizer.isAnimating()) return;
-                if (gameOver || visualizer.isAnimating()) return;
                 int tileSize = visualizer.getWidth() / game.getSize();
                 int row = e.getY() / tileSize;
                 int col = e.getX() / tileSize;
@@ -79,8 +82,7 @@ public class FifteenPuzzleController {
 
         game.addEventListener(new PuzzleEventListener() {
             @Override
-            public void onMove(int x, int y, boolean success) {
-            }
+            public void onMove(int x, int y, boolean success) {}
 
             @Override
             public void onWin() {
@@ -91,6 +93,8 @@ public class FifteenPuzzleController {
     }
 
     void handleWinOnEdt() {
+        ResourceBundle messages = frame.getMessages();
+
         if (wormStatsManager != null) {
             wormStatsManager.addCoins(10);
         }
@@ -103,15 +107,25 @@ public class FifteenPuzzleController {
         long sec = ms / 1000;
         long min = sec / 60;
         sec = sec % 60;
-        String stats = String.format("Ходы: %d\nВремя: %02d:%02d", moves, min, sec);
+        String stats = MessageFormat.format(
+                "{0}: {1}\n{2}: {3}:{4}",
+                messages.getString("puzzle.moves"),
+                moves,
+                messages.getString("puzzle.time"),
+                String.format("%02d", min),
+                String.format("%02d", sec)
+        );
 
         SoundUtils.playSound("/sounds/win.wav");
 
-        Object[] options = {"Сыграть ещё!", "Вернуться к приключениям!"};
+        Object[] options = {
+                messages.getString("puzzle.win.play.again"),
+                messages.getString("puzzle.win.return")
+        };
         int choice = JOptionPane.showOptionDialog(
                 parentComponent,
-                "<html>Вы победили!<br><br><pre>" + stats + "</pre></html>",
-                "Пятнашки",
+                "<html>" + messages.getString("puzzle.win.message") + "<br><br><pre>" + stats + "</pre></html>",
+                messages.getString("puzzle.title"),
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
                 null,

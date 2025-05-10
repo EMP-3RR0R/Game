@@ -3,6 +3,7 @@ package com.wormfarm.gui.panel;
 import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.gui.dialog.PauseMenuDialog;
+import com.wormfarm.settings.UserSettings;
 
 import javax.swing.*;
 import java.util.List;
@@ -11,24 +12,33 @@ public class WormMapMenuHelper {
     private final WormMapPanel panel;
     private final WormState worm;
     private final WormStatsManager statsManager;
+    private final UserSettings settings;
 
+    // Конструктор без settings — присваиваем null или создаём дефолтные настройки
     public WormMapMenuHelper(WormMapPanel panel, WormState worm, WormStatsManager statsManager) {
+        this(panel, worm, statsManager, null); // делегируем в основной конструктор
+    }
+
+    // Основной конструктор
+    public WormMapMenuHelper(WormMapPanel panel, WormState worm, WormStatsManager statsManager, UserSettings settings) {
         this.panel = panel;
         this.worm = worm;
         this.statsManager = statsManager;
+        this.settings = settings;
     }
 
     public void showPauseMenu(JFrame owner, Runnable onResume, Runnable onExitToMenu, Runnable onLanguageChanged) {
         JDesktopPane desktopPane = panel.getDesktopPane();
         PauseMenuDialog pauseFrame = new PauseMenuDialog(
                 owner,
-                onResume, // <-- тут resumeGame!
+                onResume,
                 () -> { if (onExitToMenu != null) onExitToMenu.run(); },
                 () -> System.exit(0),
                 this::saveGameWithName,
                 this::loadGameWithName,
                 !com.wormfarm.core.logic.WormSaveManager.listSaves().isEmpty(),
-                onLanguageChanged
+                onLanguageChanged,
+                settings // обязательно передаём настройки!
         );
         if (desktopPane != null) {
             int x = (desktopPane.getWidth() - pauseFrame.getWidth())/2;
@@ -49,7 +59,6 @@ public class WormMapMenuHelper {
         String saveName = dlg.getSelectedName();
         if (saveName != null) {
             try {
-                // Теперь передаем targetX и targetY!
                 com.wormfarm.core.logic.WormSaveManager.save(
                         worm,
                         statsManager.getStats(),
@@ -75,7 +84,6 @@ public class WormMapMenuHelper {
         String saveName = dlg.getSelectedName();
         if (saveName != null) {
             try {
-                // Передаем TargetConsumer, чтобы восстановить targetX/targetY
                 com.wormfarm.core.logic.WormSaveManager.load(
                         worm,
                         statsManager.getStats(),

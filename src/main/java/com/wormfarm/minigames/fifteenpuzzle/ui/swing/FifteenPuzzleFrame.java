@@ -4,11 +4,16 @@ import com.wormfarm.minigames.common.BaseMiniGameFrame;
 import com.wormfarm.minigames.fifteenpuzzle.logic.ClassicFifteenPuzzleLogic;
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.core.model.WormStats;
+import com.wormfarm.settings.AppLocale;
+import com.wormfarm.settings.UserSettings;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.MessageFormat;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     private static final int SIZE = 4;
@@ -18,16 +23,22 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     private final FifteenPuzzleVisualizer visualizer;
     private final FifteenPuzzleController controller;
 
-    private final JLabel timerLabel = new JLabel("Время: 00:00");
-    private final JLabel movesLabel = new JLabel("Ходы: 0");
+    private final JLabel timerLabel = new JLabel();
+    private final JLabel movesLabel = new JLabel();
     private final Timer uiTimer;
 
-    public FifteenPuzzleFrame(WormStatsManager wormStatsManager) {
+    private final UserSettings settings;
+    private ResourceBundle messages;
+
+    public FifteenPuzzleFrame(WormStatsManager wormStatsManager, UserSettings settings) {
         super("puzzle.title", wormStatsManager);
+
+        this.settings = settings;
+        this.messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
 
         logic = new ClassicFifteenPuzzleLogic(SIZE);
         visualizer = new FifteenPuzzleVisualizer(SIZE, TILE_SIZE, logic);
-        controller = new FifteenPuzzleController(logic, visualizer, this, wormStatsManager);
+        controller = new FifteenPuzzleController(logic, visualizer, this, wormStatsManager, this);
 
         setLayout(new BorderLayout());
 
@@ -40,8 +51,8 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
         add(infoPanel, BorderLayout.NORTH);
 
         JPanel buttonPanel = new JPanel();
-        JButton resetButton = new JButton("Сброс");
-        JButton solveButton = new JButton("Решить автоматически");
+        JButton resetButton = new JButton(messages.getString("puzzle.reset"));
+        JButton solveButton = new JButton(messages.getString("puzzle.autosolve"));
 
         resetButton.addActionListener(e -> {
             logic.resetBoard();
@@ -80,11 +91,12 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
         });
         uiTimer.start();
 
+        updateInfo();
         startGame();
     }
 
     public FifteenPuzzleFrame() {
-        this(new WormStatsManager(new WormStats(0)));
+        this(new WormStatsManager(new WormStats(0)), null);
     }
 
     private void updateInfo() {
@@ -92,8 +104,8 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
         long sec = ms / 1000;
         long min = sec / 60;
         sec = sec % 60;
-        timerLabel.setText(String.format("Время: %02d:%02d", min, sec));
-        movesLabel.setText("Ходы: " + logic.getMoveCount());
+        timerLabel.setText(MessageFormat.format("{0}: {1}:{2}", messages.getString("puzzle.time"), String.format("%02d", min), String.format("%02d", sec)));
+        movesLabel.setText(MessageFormat.format("{0}: {1}", messages.getString("puzzle.moves"), logic.getMoveCount()));
     }
 
     @Override
@@ -103,7 +115,10 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
 
     @Override
     protected void updateComponents() {
-        // Можно обновить локализацию здесь
+        // Обновить локализацию (например, при смене языка)
+        this.messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
+        // Обновить все тексты, если потребуется
+        updateInfo();
     }
 
     @Override
@@ -137,5 +152,9 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     public void endGame() {
         uiTimer.stop();
         visualizer.clearSprites();
+    }
+
+    public ResourceBundle getMessages() {
+        return messages;
     }
 }

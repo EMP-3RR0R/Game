@@ -1,5 +1,7 @@
 package com.wormfarm.settings;
 
+import com.wormfarm.util.SoundUtils;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashMap;
@@ -9,15 +11,17 @@ import java.util.ResourceBundle;
 public class SettingsDialog extends JDialog {
     private final Runnable onLanguageChange;
     private final JComboBox<String> langCombo;
-
+    private final JSlider volumeSlider;
     private final Map<String, String> langMap = new LinkedHashMap<>() {{
         put("English", "en");
         put("Русский", "ru");
     }};
+    private final UserSettings settings;
 
-    public SettingsDialog(Window owner, Runnable onLanguageChange) {
+    public SettingsDialog(Window owner, Runnable onLanguageChange, UserSettings settings) {
         super(owner, ModalityType.APPLICATION_MODAL);
         this.onLanguageChange = onLanguageChange;
+        this.settings = settings;
 
         ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
         setTitle(messages.getString("settings.dialog.title"));
@@ -25,28 +29,49 @@ public class SettingsDialog extends JDialog {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
 
+        // Язык
         JLabel labelLang = new JLabel(messages.getString("settings.language"));
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.LINE_END;
         add(labelLang, gbc);
 
         langCombo = new JComboBox<>(langMap.keySet().toArray(new String[0]));
         gbc.gridx = 1;
         gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.LINE_START;
         add(langCombo, gbc);
 
-        String current = AppLocale.getLocale().getLanguage();
+        // Показываем текущий язык из настроек
+        String currentLang = settings.getLanguage();
         int idx = 0;
         for (String code : langMap.values()) {
-            if (code.equals(current)) {
+            if (code.equals(currentLang)) {
                 langCombo.setSelectedIndex(idx);
                 break;
             }
             idx++;
         }
 
-        // Кнопки "Сохранить" и "Отмена"
+        // Громкость
+        JLabel labelVolume = new JLabel(messages.getString("settings.volume"));
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.LINE_END;
+        add(labelVolume, gbc);
+
+        volumeSlider = new JSlider(0, 100, (int) (settings.getVolume() * 100));
+        volumeSlider.setMajorTickSpacing(25);
+        volumeSlider.setMinorTickSpacing(5);
+        volumeSlider.setPaintTicks(true);
+        volumeSlider.setPaintLabels(true);
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        add(volumeSlider, gbc);
+
+        // Кнопки
         JPanel btnPanel = new JPanel();
         JButton btnSave = new JButton(messages.getString("settings.save"));
         JButton btnCancel = new JButton(messages.getString("settings.cancel"));
@@ -54,14 +79,26 @@ public class SettingsDialog extends JDialog {
         btnPanel.add(btnCancel);
 
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
         add(btnPanel, gbc);
 
         btnSave.addActionListener(e -> {
             String selectedLang = langMap.get((String) langCombo.getSelectedItem());
-            AppLocale.setLocale(selectedLang);
+            settings.setLanguage(selectedLang);
+            AppLocale.setLocale(selectedLang); // Меняем глобальную локаль приложения
+
+            float volume = volumeSlider.getValue() / 100.0f;
+            settings.setVolume(volume);
+            SoundUtils.setVolume(volume);
+
+            try {
+                UserSettings.save(settings, new java.io.File("user.settings"));
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Ошибка сохранения настроек: " + ex.getMessage());
+            }
+
             dispose();
             if (onLanguageChange != null) onLanguageChange.run();
         });
