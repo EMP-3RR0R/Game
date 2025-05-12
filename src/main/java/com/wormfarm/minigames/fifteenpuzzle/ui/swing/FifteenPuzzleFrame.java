@@ -165,6 +165,7 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
 
     @Override
     public void dispose() {
+        uiTimer.stop();
         super.dispose();
         visualizer.clearSprites();
     }

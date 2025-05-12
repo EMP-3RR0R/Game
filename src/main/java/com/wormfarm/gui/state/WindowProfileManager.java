@@ -2,6 +2,7 @@ package com.wormfarm.gui.state;
 
 import com.wormfarm.gui.base.WindowStateManager;
 import com.wormfarm.gui.base.BaseInternalFrame;
+import com.wormfarm.gui.base.InternalFrameState;
 import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.core.logic.WormSaveManager;
@@ -28,7 +29,7 @@ public class WindowProfileManager {
 
     public static class FullProfile implements Serializable {
         public MainWindowState mainWindow;
-        public java.util.List<WindowStateManager.InternalFrameState> frames;
+        public java.util.List<InternalFrameState> frames;
     }
 
     public WindowProfileManager(JFrame frame, ResourceBundle messages, JDesktopPane desktopPane, GameSessionManager gameSessionManager) {
@@ -72,8 +73,8 @@ public class WindowProfileManager {
             FullProfile profile = new FullProfile();
             profile.mainWindow = mainWinState;
             // Убираем дубли по ключу:
-            Map<String, WindowStateManager.InternalFrameState> uniqueFrames = new LinkedHashMap<>();
-            for (WindowStateManager.InternalFrameState state : windowStateManager.getFrameStates()) {
+            Map<String, InternalFrameState> uniqueFrames = new LinkedHashMap<>();
+            for (InternalFrameState state : windowStateManager.getFrameStates()) {
                 uniqueFrames.put(state.windowKey, state);
             }
             profile.frames = new ArrayList<>(uniqueFrames.values());
@@ -199,8 +200,8 @@ public class WindowProfileManager {
             // --- ТЕПЕРЬ восстанавливаем внутренние окна! ---
             windowStateManager.getFrameStates().clear();
             if (restoredProfile.frames != null) {
-                Map<String, WindowStateManager.InternalFrameState> uniqueFrames = new LinkedHashMap<>();
-                for (WindowStateManager.InternalFrameState state : restoredProfile.frames) {
+                Map<String, InternalFrameState> uniqueFrames = new LinkedHashMap<>();
+                for (InternalFrameState state : restoredProfile.frames) {
                     uniqueFrames.put(state.windowKey, state);
                 }
                 windowStateManager.getFrameStates().addAll(uniqueFrames.values());

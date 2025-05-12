@@ -74,6 +74,8 @@ public class MainApplicationFrame extends JFrame {
                     windowProfileManager.saveWindowsProfile();
                     dialogManager.saveDialogStates();
                     dispose();
+                    // ГАРАНТИРОВАННОЕ завершение процесса (решает проблему висящего процесса)
+                    System.exit(0);
                 }
             }
         });
@@ -98,4 +100,5 @@ public class MainApplicationFrame extends JFrame {
         // Восстановление состояния приложения
         new AppStateRestorer(this, messages, gameSessionManager, windowProfileManager, dialogManager).tryRestoreAppState();
     }
+
 }

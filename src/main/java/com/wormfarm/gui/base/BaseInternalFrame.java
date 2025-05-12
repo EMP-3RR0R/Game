@@ -3,6 +3,7 @@ package com.wormfarm.gui.base;
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
+import java.awt.*;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -86,7 +87,13 @@ public abstract class BaseInternalFrame extends JInternalFrame {
         state.maximum = isMaximum();
         state.visible = isVisible();
         try { state.selected = isSelected(); } catch (Exception e) { state.selected = false; }
-        // .extra поддерживается (например, для мини-игр)
+        if (state.icon) {
+            try {
+                Point iconLoc = getDesktopIcon().getLocation();
+                state.iconX = iconLoc.x;
+                state.iconY = iconLoc.y;
+            } catch (Exception ignored) {}
+        }
         return state;
     }
 
@@ -97,7 +104,15 @@ public abstract class BaseInternalFrame extends JInternalFrame {
         try { setIcon(state.icon); } catch (Exception ignored) {}
         try { setMaximum(state.maximum); } catch (Exception ignored) {}
         try { setSelected(state.selected); } catch (Exception ignored) {}
-        // .extra поддерживается (например, для мини-игр)
+        if (state.icon && state.iconX >= 0 && state.iconY >= 0) {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    getDesktopIcon().setLocation(state.iconX, state.iconY);
+                    getDesktopIcon().revalidate();
+                    getDesktopIcon().repaint();
+                } catch (Exception ignored) {}
+            });
+        }
     }
 
     public void updateLocale() {

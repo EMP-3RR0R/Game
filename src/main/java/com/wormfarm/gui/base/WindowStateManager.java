@@ -1,28 +1,12 @@
 package com.wormfarm.gui.base;
 
 import javax.swing.*;
-import java.io.Serializable;
+import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.BiFunction;
 
 public class WindowStateManager {
-    public static class InternalFrameState implements Serializable {
-        public final String windowKey;
-        public final int x, y, width, height;
-        public final boolean icon, maximized;
-
-        public InternalFrameState(String windowKey, int x, int y, int width, int height, boolean icon, boolean maximized) {
-            this.windowKey = windowKey;
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
-            this.icon = icon;
-            this.maximized = maximized;
-        }
-    }
-
     private final List<InternalFrameState> frameStates = new ArrayList<>();
     public List<InternalFrameState> getFrameStates() { return frameStates; }
 
@@ -30,20 +14,37 @@ public class WindowStateManager {
         frameStates.clear();
         Set<String> uniqueKeys = new HashSet<>();
         for (JInternalFrame frame : desktopPane.getAllFrames()) {
-            // Сохраняем все окна, даже свернутые и невидимые!
+            // ВАЖНО: Сохраняем только видимые окна!
+            if (!frame.isVisible()) continue;
+
             String windowKey = (frame instanceof BaseInternalFrame)
                     ? ((BaseInternalFrame) frame).getWindowKey()
                     : frame.getClass().getName();
             if (uniqueKeys.contains(windowKey)) continue;
             uniqueKeys.add(windowKey);
 
-            boolean maximized = false, icon = false;
-            try { maximized = frame.isMaximum(); } catch (Exception ignored) {}
-            try { icon = frame.isIcon(); } catch (Exception ignored) {}
-
-            frameStates.add(new InternalFrameState(windowKey,
-                    frame.getX(), frame.getY(), frame.getWidth(), frame.getHeight(),
-                    icon, maximized));
+            InternalFrameState state;
+            if (frame instanceof BaseInternalFrame) {
+                state = ((BaseInternalFrame) frame).exportState();
+            } else {
+                state = new InternalFrameState(windowKey);
+                state.x = frame.getX();
+                state.y = frame.getY();
+                state.width = frame.getWidth();
+                state.height = frame.getHeight();
+                state.icon = frame.isIcon();
+                state.maximum = frame.isMaximum();
+                state.visible = frame.isVisible();
+                try { state.selected = frame.isSelected(); } catch (Exception e) { state.selected = false; }
+                if (state.icon) {
+                    try {
+                        Point p = frame.getDesktopIcon().getLocation();
+                        state.iconX = p.x;
+                        state.iconY = p.y;
+                    } catch (Exception ignored) {}
+                }
+            }
+            frameStates.add(state);
         }
     }
 
@@ -53,23 +54,30 @@ public class WindowStateManager {
             JInternalFrame frame = factory.apply(state.windowKey, state);
             if (frame == null) continue;
 
-            // --- Явно разрешаем сворачивание и закрытие ---
             frame.setIconifiable(true);
             frame.setClosable(true);
 
             frame.setBounds(state.x, state.y, state.width, state.height);
-            desktopPane.add(frame);
-            frame.setVisible(true);
+            desktopPane.add(frame, JLayeredPane.MODAL_LAYER);
+            frame.setVisible(state.visible);
 
-            // --- Swing workaround: iconify fix ---
-            if (state.icon) {
-                try { frame.setIcon(false); } catch (Exception ignored) {}
-                try { frame.setIcon(true); } catch (Exception ignored) {}
+            if (frame instanceof BaseInternalFrame) {
+                ((BaseInternalFrame) frame).importState(state);
             } else {
-                try { frame.setIcon(false); } catch (Exception ignored) {}
+                try { frame.setIcon(state.icon); } catch (Exception ignored) {}
+                try { frame.setMaximum(state.maximum); } catch (Exception ignored) {}
+                try { frame.setSelected(state.selected); } catch (Exception ignored) {}
+                // --- Восстанавливаем положение иконки
+                if (state.icon && state.iconX >= 0 && state.iconY >= 0) {
+                    SwingUtilities.invokeLater(() -> {
+                        try {
+                            frame.getDesktopIcon().setLocation(state.iconX, state.iconY);
+                            frame.getDesktopIcon().revalidate();
+                            frame.getDesktopIcon().repaint();
+                        } catch (Exception ignored) {}
+                    });
+                }
             }
-            try { frame.setMaximum(state.maximized); } catch (Exception ignored) {}
-
             restored.add(state.windowKey);
         }
         desktopPane.validate();

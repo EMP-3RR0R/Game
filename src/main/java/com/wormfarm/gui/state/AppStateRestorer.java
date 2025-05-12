@@ -31,27 +31,11 @@ public class AppStateRestorer {
     public void tryRestoreAppState() {
         boolean profilesExist = Files.exists(Paths.get(PROFILES_DIR, "profile1.state.bin"));
         boolean dialogsStateExists = new File("dialogs.state.bin").exists();
-        boolean appStateExists = new File("app.state.bin").exists();
 
         // --- ВСЕГДА предлагаем профиль если есть хотя бы один! ---
         boolean restored = false;
         if (profilesExist) {
             restored = offerProfileRestore(dialogsStateExists);
-        } else if (appStateExists) {
-            int res = JOptionPane.showConfirmDialog(
-                    frame,
-                    messages.getString("restore.prompt.message"),
-                    messages.getString("restore.prompt.title"),
-                    JOptionPane.YES_NO_OPTION
-            );
-            if (res == JOptionPane.YES_OPTION) {
-                gameSessionManager.restoreAppState();
-                // Если карта активна — подгружаем диалоги
-                if (gameSessionManager.isGameMapActive() && dialogsStateExists) {
-                    dialogManager.restoreDialogStates();
-                }
-                restored = true;
-            }
         }
         // Если не восстановлено — ничего не делаем, игра стартует с нуля
     }
