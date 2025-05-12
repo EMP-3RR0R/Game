@@ -34,13 +34,10 @@ public class AppStateRestorer {
         boolean appStateExists = new File("app.state.bin").exists();
 
         // --- ВСЕГДА предлагаем профиль если есть хотя бы один! ---
-        boolean offeredProfile = false;
+        boolean restored = false;
         if (profilesExist) {
-            offeredProfile = offerProfileRestore(dialogsStateExists);
-        }
-
-        // Если не был выбран профиль и есть app.state, восстановить appState
-        if (!offeredProfile && appStateExists) {
+            restored = offerProfileRestore(dialogsStateExists);
+        } else if (appStateExists) {
             int res = JOptionPane.showConfirmDialog(
                     frame,
                     messages.getString("restore.prompt.message"),
@@ -53,8 +50,10 @@ public class AppStateRestorer {
                 if (gameSessionManager.isGameMapActive() && dialogsStateExists) {
                     dialogManager.restoreDialogStates();
                 }
+                restored = true;
             }
         }
+        // Если не восстановлено — ничего не делаем, игра стартует с нуля
     }
 
     // Возвращает true если профиль был выбран (и восстановлен), false если пользователь выбрал "не загружать"

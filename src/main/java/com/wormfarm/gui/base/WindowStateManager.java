@@ -1,7 +1,6 @@
 package com.wormfarm.gui.base;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.Serializable;
 import java.util.*;
 import java.util.List;
@@ -31,7 +30,7 @@ public class WindowStateManager {
         frameStates.clear();
         Set<String> uniqueKeys = new HashSet<>();
         for (JInternalFrame frame : desktopPane.getAllFrames()) {
-            if (!frame.isVisible() || !frame.isShowing()) continue;
+            // Сохраняем все окна, даже свернутые и невидимые!
             String windowKey = (frame instanceof BaseInternalFrame)
                     ? ((BaseInternalFrame) frame).getWindowKey()
                     : frame.getClass().getName();

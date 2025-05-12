@@ -40,7 +40,8 @@ public class WindowProfileManager {
 
     public void saveWindowsProfile() {
         try {
-            gameSessionManager.saveAppState();
+            // Сначала сохраняем состояние окон, потом appState!
+            windowStateManager.captureStates(desktopPane);
 
             Path dir = Paths.get(PROFILES_DIR);
             if (!Files.exists(dir)) Files.createDirectories(dir);
@@ -59,8 +60,6 @@ public class WindowProfileManager {
                     Files.move(prevAuto, nextAuto, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
-
-            windowStateManager.captureStates(desktopPane);
 
             MainWindowState mainWinState = new MainWindowState();
             java.awt.Rectangle b = frame.getBounds();
@@ -83,6 +82,9 @@ public class WindowProfileManager {
             try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(profile1))) {
                 out.writeObject(profile);
             }
+
+            // Только после captureStates!
+            gameSessionManager.saveAppState();
 
             if (gameSessionManager.isGameMapActive()) {
                 Path autoSaveDir = dir.resolve("profile1");
@@ -180,6 +182,7 @@ public class WindowProfileManager {
                         (x, y) -> { loadedTarget[0] = x; loadedTarget[1] = y; },
                         autoSavePath.toAbsolutePath().toString()
                 );
+                // --- СНАЧАЛА восстанавливаем карту, панели и т.д. ---
                 gameSessionManager.setGameState(worm, statsManager);
                 loadedAutoSave = true;
                 System.out.println("Загружен автосейв профиля: " + autoSavePath.toAbsolutePath());
@@ -193,7 +196,7 @@ public class WindowProfileManager {
             int targetY = loadedTarget[1];
             UserSettings settings = gameSessionManager.getSettings();
 
-            // Восстанавливаем внутренние окна (только по одному каждого типа!)
+            // --- ТЕПЕРЬ восстанавливаем внутренние окна! ---
             windowStateManager.getFrameStates().clear();
             if (restoredProfile.frames != null) {
                 Map<String, WindowStateManager.InternalFrameState> uniqueFrames = new LinkedHashMap<>();
