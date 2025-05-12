@@ -28,4 +28,11 @@ public class WormState implements Serializable {
     private static double clamp(double val, double min, double max) {
         return Math.max(min, Math.min(max, val));
     }
+
+    // Добавлен метод для поддержки copyFrom
+    public void copyFrom(WormState other) {
+        this.x = other.x;
+        this.y = other.y;
+        this.direction = other.direction;
+    }
 }

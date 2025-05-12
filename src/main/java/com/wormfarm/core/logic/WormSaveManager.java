@@ -1,12 +1,12 @@
 package com.wormfarm.core.logic;
 
-import com.wormfarm.core.model.WormSaveData;
 import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.model.WormStats;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class WormSaveManager {
     private static String saveDir = "saves";
@@ -15,16 +15,25 @@ public class WormSaveManager {
         saveDir = dir;
     }
 
+    // Для обычных пользовательских сейвов по имени
     public static void save(WormState state, WormStats stats, int targetX, int targetY, String saveName) throws IOException {
         validateSaveName(saveName);
-        File dir = new File(saveDir);
-        if (!dir.exists() && !dir.mkdirs()) {
-            throw new IOException("Failed to create save directory: " + saveDir);
+        File file = new File(saveDir, saveName + ".save");
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            oos.writeObject(state);
+            oos.writeObject(stats);
+            oos.writeInt(targetX);
+            oos.writeInt(targetY);
         }
-        File file = new File(dir, saveName + ".save");
-        WormSaveData data = new WormSaveData(state, stats, targetX, targetY);
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file))) {
-            out.writeObject(data);
+    }
+
+    // Для автосейва по абсолютному пути, без проверки имени
+    public static void saveToAbsolutePath(WormState state, WormStats stats, int targetX, int targetY, String filePath) throws IOException {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(state);
+            oos.writeObject(stats);
+            oos.writeInt(targetX);
+            oos.writeInt(targetY);
         }
     }
 
@@ -33,11 +42,31 @@ public class WormSaveManager {
         return file.exists();
     }
 
-    public static void load(WormState state, WormStats stats, WormSaveData.TargetConsumer targetConsumer, String saveName) throws IOException, ClassNotFoundException {
+    // Для обычных пользовательских сейвов по имени
+    public static void load(WormState state, WormStats stats, BiConsumer<Integer, Integer> targetSetter, String saveName) throws IOException, ClassNotFoundException {
+        validateSaveName(saveName);
         File file = new File(saveDir, saveName + ".save");
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))) {
-            WormSaveData data = (WormSaveData) in.readObject();
-            data.applyTo(state, stats, targetConsumer);
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            WormState loadedState = (WormState) ois.readObject();
+            WormStats loadedStats = (WormStats) ois.readObject();
+            int x = ois.readInt();
+            int y = ois.readInt();
+            state.copyFrom(loadedState);
+            stats.copyFrom(loadedStats);
+            targetSetter.accept(x, y);
+        }
+    }
+
+    // Для автосейва по абсолютному пути, без проверки имени
+    public static void loadFromAbsolutePath(WormState state, WormStats stats, BiConsumer<Integer, Integer> targetSetter, String filePath) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+            WormState loadedState = (WormState) ois.readObject();
+            WormStats loadedStats = (WormStats) ois.readObject();
+            int x = ois.readInt();
+            int y = ois.readInt();
+            state.copyFrom(loadedState);
+            stats.copyFrom(loadedStats);
+            targetSetter.accept(x, y);
         }
     }
 
@@ -59,6 +88,7 @@ public class WormSaveManager {
     }
 
     public static void deleteSave(String saveName) {
+        validateSaveName(saveName);
         File file = new File(saveDir, saveName + ".save");
         if (file.exists()) file.delete();
     }

@@ -10,14 +10,12 @@ public abstract class BaseInternalFrame extends JInternalFrame {
     protected ResourceBundle messages;
     public static Locale currentLocale;
     protected boolean allowClose = false;
+    public abstract String getWindowKey();
 
     // Делегат для кастомного подтверждения закрытия (если нужно)
     protected CustomCloseHandler customCloseHandler;
 
     public interface CustomCloseHandler {
-        /**
-         * @return true если окно должно быть закрыто (выбран "Да"), false иначе
-         */
         boolean onCustomClose(JInternalFrame frame);
     }
 
@@ -47,10 +45,6 @@ public abstract class BaseInternalFrame extends JInternalFrame {
         });
     }
 
-    /**
-     * Централизованная точка подтверждения закрытия окна.
-     * Если задан customCloseHandler, он берёт на себя ответственность за диалог.
-     */
     protected void confirmClose() {
         if (customCloseHandler != null) {
             boolean shouldClose = customCloseHandler.onCustomClose(this);
@@ -58,7 +52,6 @@ public abstract class BaseInternalFrame extends JInternalFrame {
                 allowClose = true;
                 dispose();
             }
-            // Если пользователь отказал — ничего не делаем, окно не закрывается, второй диалог не появляется.
             return;
         }
         if (!allowClose) {
@@ -75,6 +68,36 @@ public abstract class BaseInternalFrame extends JInternalFrame {
         } else {
             dispose();
         }
+    }
+
+    /** Программное закрытие без подтверждения */
+    public void closeWithoutConfirmation() {
+        allowClose = true;
+        dispose();
+    }
+
+    public InternalFrameState exportState() {
+        InternalFrameState state = new InternalFrameState(getWindowKey());
+        state.x = getX();
+        state.y = getY();
+        state.width = getWidth();
+        state.height = getHeight();
+        state.icon = isIcon();
+        state.maximum = isMaximum();
+        state.visible = isVisible();
+        try { state.selected = isSelected(); } catch (Exception e) { state.selected = false; }
+        // .extra поддерживается (например, для мини-игр)
+        return state;
+    }
+
+    public void importState(InternalFrameState state) {
+        setSize(state.width, state.height);
+        setLocation(state.x, state.y);
+        setVisible(state.visible);
+        try { setIcon(state.icon); } catch (Exception ignored) {}
+        try { setMaximum(state.maximum); } catch (Exception ignored) {}
+        try { setSelected(state.selected); } catch (Exception ignored) {}
+        // .extra поддерживается (например, для мини-игр)
     }
 
     public void updateLocale() {

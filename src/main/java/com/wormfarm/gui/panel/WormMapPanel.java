@@ -4,6 +4,7 @@ import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.model.EventMapModel;
 import com.wormfarm.core.model.EventMarker;
 import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.gui.state.GameSessionManager;
 import com.wormfarm.settings.UserSettings;
 
 import javax.swing.*;
@@ -43,6 +44,11 @@ public class WormMapPanel extends JPanel {
         this.onExitToMenu = onExitToMenu;
     }
 
+    private Runnable onExitToDesktop = null;
+    public void setOnExitToDesktop(Runnable onExitToDesktop) {
+        this.onExitToDesktop = onExitToDesktop;
+    }
+
     private Runnable onLanguageChanged = null;
     public void setOnLanguageChanged(Runnable onLanguageChanged) {
         this.onLanguageChanged = onLanguageChanged;
@@ -53,6 +59,15 @@ public class WormMapPanel extends JPanel {
 
     private final UserSettings settings;
     private ResourceBundle messages;
+
+    // Новый блок: для связи с GameSessionManager
+    private GameSessionManager gameSessionManager;
+    public void setGameSessionManager(GameSessionManager gsm) {
+        this.gameSessionManager = gsm;
+    }
+    public GameSessionManager getGameSessionManager() {
+        return gameSessionManager;
+    }
 
     public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame, WormStatsManager statsManager, UserSettings settings) {
         this.worm = worm;
@@ -122,7 +137,6 @@ public class WormMapPanel extends JPanel {
         });
 
         setDoubleBuffered(true);
-        // Теперь храним КЛЮЧ ресурса!
         mapModel.addMarker(new EventMarker(200, 200, "puzzle.title"));
 
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
@@ -145,9 +159,13 @@ public class WormMapPanel extends JPanel {
         this(worm, mapModel, ownerFrame, null, null);
     }
 
-    public void dispose() {
+    public void shutdown() {
         timerRedraw.stop();
         timerModel.stop();
+        Container parent = getParent();
+        if (parent != null) {
+            parent.remove(this);
+        }
     }
 
     protected void setTargetPosition(Point p) {
@@ -165,7 +183,6 @@ public class WormMapPanel extends JPanel {
 
     void tryActivateEvent(EventMarker marker) {
         paused = true;
-        // Получаем локализованный заголовок по ключу!
         String eventTitle = messages.getString(marker.getDescription());
         String confirmMessage = MessageFormat.format(
                 messages.getString("challenge.confirm.message"),
@@ -214,9 +231,6 @@ public class WormMapPanel extends JPanel {
         requestFocusInWindow();
     }
 
-    /**
-     * Переподгружает локализацию. Вызывать при смене языка.
-     */
     public void updateLocale() {
         Locale locale = settings != null && settings.getLanguage() != null
                 ? new Locale(settings.getLanguage())
@@ -231,24 +245,29 @@ public class WormMapPanel extends JPanel {
 
     private void showPauseMenu() {
         pauseGame();
-        menuHelper.showPauseMenu(ownerFrame, this::resumeGame, onExitToMenu, onLanguageChanged);
+        menuHelper.showPauseMenu(
+                ownerFrame,
+                this::resumeGame,
+                onExitToMenu,
+                onExitToDesktop,
+                onLanguageChanged
+        );
     }
 
     public int getTargetX() { return targetX; }
-
     public int getTargetY() { return targetY; }
-
     public void setTarget(int x, int y) {
         targetX = Math.max(0, Math.min(FIELD_WIDTH, x));
         targetY = Math.max(0, Math.min(FIELD_HEIGHT, y));
         repaint();
     }
-
     public void setDesktopPane(JDesktopPane desktopPane) {
         this.desktopPane = desktopPane;
     }
-
     public JDesktopPane getDesktopPane() {
         return desktopPane;
+    }
+    public WormStatsManager getStatsManager() {
+        return statsManager;
     }
 }

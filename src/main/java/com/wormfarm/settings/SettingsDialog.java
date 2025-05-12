@@ -1,5 +1,6 @@
 package com.wormfarm.settings;
 
+import com.wormfarm.gui.dialog.DialogState;
 import com.wormfarm.util.SoundUtils;
 
 import javax.swing.*;
@@ -108,5 +109,52 @@ public class SettingsDialog extends JDialog {
         pack();
         setResizable(false);
         setLocationRelativeTo(owner);
+    }
+
+    // --- Сохранение состояния (DialogState) ---
+
+    public String getDialogKey() {
+        return "settings.dialog";
+    }
+
+    public DialogState exportState() {
+        DialogState state = new DialogState(getDialogKey());
+        state.x = getX();
+        state.y = getY();
+        state.width = getWidth();
+        state.height = getHeight();
+        state.visible = isVisible();
+        // Сохраняем выбранный язык и громкость через extra (например: "ru;75")
+        String selectedLang = langMap.get((String) langCombo.getSelectedItem());
+        int volume = volumeSlider.getValue();
+        state.extra = selectedLang + ";" + volume;
+        return state;
+    }
+
+    public void importState(DialogState state) {
+        setLocation(state.x, state.y);
+        setSize(state.width, state.height);
+        setVisible(state.visible);
+        // Восстановление выбранного языка и громкости, если extra не пуста
+        if (state.extra != null) {
+            String[] parts = state.extra.split(";");
+            if (parts.length == 2) {
+                String langCode = parts[0];
+                try {
+                    int idx = 0;
+                    for (String code : langMap.values()) {
+                        if (code.equals(langCode)) {
+                            langCombo.setSelectedIndex(idx);
+                            break;
+                        }
+                        idx++;
+                    }
+                } catch (Exception ignored) {}
+                try {
+                    int vol = Integer.parseInt(parts[1]);
+                    volumeSlider.setValue(vol);
+                } catch (Exception ignored) {}
+            }
+        }
     }
 }

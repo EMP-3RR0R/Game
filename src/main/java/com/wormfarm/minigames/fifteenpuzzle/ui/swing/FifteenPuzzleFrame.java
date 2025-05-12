@@ -6,13 +6,15 @@ import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.core.model.WormStats;
 import com.wormfarm.settings.AppLocale;
 import com.wormfarm.settings.UserSettings;
+import com.wormfarm.gui.state.GameSessionManager;
 
 import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.MessageFormat;
-import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class FifteenPuzzleFrame extends BaseMiniGameFrame {
@@ -30,11 +32,24 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     private final UserSettings settings;
     private ResourceBundle messages;
 
-    public FifteenPuzzleFrame(WormStatsManager wormStatsManager, UserSettings settings) {
+    private final boolean restoreMode;
+    private final GameSessionManager gameSessionManager;
+
+    public FifteenPuzzleFrame(GameSessionManager gameSessionManager) {
+        this(new WormStatsManager(new WormStats(0)), null, true, gameSessionManager);
+    }
+
+    public FifteenPuzzleFrame(WormStatsManager wormStatsManager, UserSettings settings, boolean restoreMode, GameSessionManager gameSessionManager) {
         super("puzzle.title", wormStatsManager);
+
+        // --- Always iconifiable/closable ---
+        setIconifiable(true);
+        setClosable(true);
 
         this.settings = settings;
         this.messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
+        this.restoreMode = restoreMode;
+        this.gameSessionManager = gameSessionManager;
 
         logic = new ClassicFifteenPuzzleLogic(SIZE);
         visualizer = new FifteenPuzzleVisualizer(SIZE, TILE_SIZE, logic);
@@ -92,11 +107,40 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
         uiTimer.start();
 
         updateInfo();
-        startGame();
+
+        if (!restoreMode) {
+            startGame();
+        }
+
+        addInternalFrameListener(new javax.swing.event.InternalFrameAdapter() {
+            @Override
+            public void internalFrameClosed(javax.swing.event.InternalFrameEvent e) {
+                visualizer.clearSprites();
+                if (gameSessionManager != null) {
+                    gameSessionManager.onResumableWindowClosed();
+                }
+            }
+            @Override
+            public void internalFrameIconified(javax.swing.event.InternalFrameEvent e) {
+                visualizer.repaint();
+            }
+            @Override
+            public void internalFrameDeiconified(javax.swing.event.InternalFrameEvent e) {
+                visualizer.repaint();
+            }
+        });
+    }
+
+    public FifteenPuzzleFrame(WormStatsManager wormStatsManager, UserSettings settings) {
+        this(wormStatsManager, settings, false, null);
+    }
+
+    public FifteenPuzzleFrame(boolean restoreMode) {
+        this(new WormStatsManager(new WormStats(0)), null, restoreMode, null);
     }
 
     public FifteenPuzzleFrame() {
-        this(new WormStatsManager(new WormStats(0)), null);
+        this(false);
     }
 
     private void updateInfo() {
@@ -115,9 +159,7 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
 
     @Override
     protected void updateComponents() {
-        // Обновить локализацию (например, при смене языка)
         this.messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
-        // Обновить все тексты, если потребуется
         updateInfo();
     }
 
@@ -152,6 +194,11 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     public void endGame() {
         uiTimer.stop();
         visualizer.clearSprites();
+    }
+
+    @Override
+    public String getWindowKey() {
+        return "minigame.fifteen.puzzle";
     }
 
     public ResourceBundle getMessages() {

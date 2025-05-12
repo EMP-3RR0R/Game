@@ -64,7 +64,26 @@ public class SaveGameDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    public DialogState exportState() {
+        DialogState state = new DialogState(getDialogKey());
+        state.x = getX();
+        state.y = getY();
+        state.width = getWidth();
+        state.height = getHeight();
+        state.visible = isVisible();
+        state.extra = selectedName; // если нужно
+        return state;
+    }
+
+    public void importState(DialogState state) {
+        setLocation(state.x, state.y);
+        setSize(state.width, state.height);
+        setVisible(state.visible);
+        // selectedName = state.extra; // если нужно восстановить выбранное имя
+    }
+
     public String getSelectedName() {
         return selectedName;
     }
+    public String getDialogKey() { return "save.dialog"; }
 }

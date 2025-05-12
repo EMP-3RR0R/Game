@@ -7,17 +7,22 @@ import java.awt.*;
 import java.util.List;
 import java.util.ResourceBundle;
 
+/**
+ * Диалог выбора сохранения с поддержкой сериализации состояния.
+ */
 public class LoadGameDialog extends JDialog {
-    ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
     private String selectedName = null;
+    private final ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
+    private JList<String> savesList;
+    private DefaultListModel<String> model;
 
     public LoadGameDialog(JFrame owner, List<String> names) {
         super(owner, ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale()).getString("load.dialog.title"), true);
         setLayout(new BorderLayout(10, 10));
 
-        DefaultListModel<String> model = new DefaultListModel<>();
+        model = new DefaultListModel<>();
         names.forEach(model::addElement);
-        JList<String> savesList = new JList<>(model);
+        savesList = new JList<>(model);
         savesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         savesList.setVisibleRowCount(8);
         savesList.setFixedCellWidth(200);
@@ -67,5 +72,38 @@ public class LoadGameDialog extends JDialog {
 
     public String getSelectedName() {
         return selectedName;
+    }
+
+
+    public String getDialogKey() {
+        return "load.dialog";
+    }
+
+    public DialogState exportState() {
+        DialogState state = new DialogState(getDialogKey());
+        state.x = getX();
+        state.y = getY();
+        state.width = getWidth();
+        state.height = getHeight();
+        state.visible = isVisible();
+        // Сохраняем выбранный слот, если выбран (можно передавать через extra)
+        int selIdx = savesList.getSelectedIndex();
+        state.extra = (selIdx >= 0) ? String.valueOf(selIdx) : null;
+        return state;
+    }
+
+    public void importState(DialogState state) {
+        setLocation(state.x, state.y);
+        setSize(state.width, state.height);
+        setVisible(state.visible);
+        // Восстанавливаем выбранный индекс, если был сохранён
+        if (state.extra != null) {
+            try {
+                int idx = Integer.parseInt(state.extra);
+                if (idx >= 0 && idx < model.size()) {
+                    savesList.setSelectedIndex(idx);
+                }
+            } catch (Exception ignored) {}
+        }
     }
 }

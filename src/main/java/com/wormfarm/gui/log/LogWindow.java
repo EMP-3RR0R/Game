@@ -1,4 +1,4 @@
-package com.wormfarm.gui.log;
+/*package com.wormfarm.gui.log;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
@@ -51,4 +51,4 @@ public class LogWindow extends BaseInternalFrame implements LogChangeListener {
     @Override
     protected void updateComponents() {
     }
-}
+}*/

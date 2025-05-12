@@ -65,11 +65,14 @@ public class FifteenPuzzleVisualizer extends JPanel {
         loadAllSprites();
         pickRandomSprite();
 
+        // Исправлено: НЕ вызываем clearSprites на просто displayability change!
         this.addHierarchyListener(new HierarchyListener() {
             @Override
             public void hierarchyChanged(HierarchyEvent e) {
+                // Только если компонент полностью уничтожен (нет окна-родителя и не отображается)
                 if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0
-                        && !isDisplayable()) {
+                        && !isDisplayable()
+                        && SwingUtilities.getWindowAncestor(FifteenPuzzleVisualizer.this) == null) {
                     clearSprites();
                 }
             }
