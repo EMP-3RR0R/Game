@@ -19,7 +19,7 @@ public class DialogManager {
     private final GameSessionManager gameSessionManager;
 
     private final DialogStateManager dialogStateManager = new DialogStateManager();
-    private final List<JDialog> openDialogs = new ArrayList<>();
+    final List<JDialog> openDialogs = new ArrayList<>();
 
     public DialogManager(JFrame frame, ResourceBundle messages, GameSessionManager gameSessionManager) {
         this.frame = frame;

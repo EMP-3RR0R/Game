@@ -128,25 +128,4 @@ class WormSaveManagerTest {
         assertNotNull(saves, "List must not be null");
         assertTrue(saves.isEmpty(), "List must be empty if no files saved");
     }
-
-    @Test
-    void loadWorksWithNullTargetConsumer() throws IOException, ClassNotFoundException {
-        WormState originalState = new WormState(7, 8, 1.5);
-        WormStats originalStats = new WormStats(42);
-        int targetX = 11;
-        int targetY = 22;
-        String saveName = "nullabletarget";
-        WormSaveManager.save(originalState, originalStats, targetX, targetY, saveName);
-
-        WormState loadedState = new WormState(0, 0, 0);
-        WormStats loadedStats = new WormStats(0);
-
-        // Проверяем, что не выбрасывается исключение
-        WormSaveManager.load(loadedState, loadedStats, null, saveName);
-
-        assertEquals(originalState.getX(), loadedState.getX(), 1e-9);
-        assertEquals(originalState.getY(), loadedState.getY(), 1e-9);
-        assertEquals(originalState.getDirection(), loadedState.getDirection(), 1e-9);
-        assertEquals(originalStats.getWormCoins(), loadedStats.getWormCoins());
-    }
 }

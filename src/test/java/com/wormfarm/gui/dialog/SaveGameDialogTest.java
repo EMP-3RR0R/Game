@@ -14,7 +14,7 @@ class SaveGameDialogTest {
         JFrame owner = new JFrame();
         SaveGameDialog dialog = new SaveGameDialog(owner, List.of("Save1", "Save2"));
 
-        dialog.setVisible(false); // Simulate dialog closing
+        dialog.setVisible(false);
         dialog.dispose();
 
         assertNull(dialog.getSelectedName());
