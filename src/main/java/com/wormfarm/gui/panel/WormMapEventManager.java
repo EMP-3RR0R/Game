@@ -37,7 +37,7 @@ public class WormMapEventManager {
     }
 
     // Utility ― всегда свежий ResourceBundle!
-    private ResourceBundle getMessages() {
+    protected ResourceBundle getMessages() {
         return ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
     }
 
@@ -121,6 +121,15 @@ public class WormMapEventManager {
                 puzzleFrame.setLocation(Math.max(0, x), Math.max(0, y));
             });
         }
-        // Можно добавить обработку других событий
+        // Можно добавить обработку других событий, используя marker.getDescription()
+    }
+
+    // Локализованный заголовок события для диалогов
+    public String getEventTitle(EventMarker marker) {
+        try {
+            return getMessages().getString(marker.getDescription());
+        } catch (Exception e) {
+            return marker.getDescription();
+        }
     }
 }

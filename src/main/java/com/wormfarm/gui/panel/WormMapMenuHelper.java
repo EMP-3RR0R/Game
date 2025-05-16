@@ -27,7 +27,7 @@ public class WormMapMenuHelper {
 
     public void showPauseMenu(JFrame owner, Runnable onResume, Runnable onExitToMenu, Runnable onExitToDesktop, Runnable onLanguageChanged) {
         JDesktopPane desktopPane = panel.getDesktopPane();
-        GameSessionManager gsm = panel.getGameSessionManager(); // Добавь этот метод-геттер, если его нет!
+        GameSessionManager gsm = panel.getGameSessionManager();
         PauseMenuDialog pauseFrame = new PauseMenuDialog(
                 owner,
                 onResume,
@@ -39,8 +39,8 @@ public class WormMapMenuHelper {
                 panel.getTargetY(),
                 settings,
                 onLanguageChanged,
-                panel, // parentComponent
-                gsm    // <-- gameSessionManager
+                panel,
+                gsm
         );
         if (desktopPane != null) {
             int x = (desktopPane.getWidth() - pauseFrame.getWidth()) / 2;

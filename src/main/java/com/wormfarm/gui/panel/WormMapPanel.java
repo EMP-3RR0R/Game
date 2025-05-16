@@ -53,6 +53,7 @@ public class WormMapPanel extends JPanel {
     public void setOnLanguageChanged(Runnable onLanguageChanged) {
         this.onLanguageChanged = onLanguageChanged;
     }
+    public Runnable getOnLanguageChanged() { return onLanguageChanged; }
 
     private final WormMapEventManager eventManager;
     private final WormMapMenuHelper menuHelper;
@@ -60,7 +61,7 @@ public class WormMapPanel extends JPanel {
     private final UserSettings settings;
     private ResourceBundle messages;
 
-    // Новый блок: для связи с GameSessionManager
+    // Для связи с GameSessionManager
     private GameSessionManager gameSessionManager;
     public void setGameSessionManager(GameSessionManager gsm) {
         this.gameSessionManager = gsm;
@@ -183,15 +184,16 @@ public class WormMapPanel extends JPanel {
 
     void tryActivateEvent(EventMarker marker) {
         paused = true;
-        String eventTitle = messages.getString(marker.getDescription());
-        String confirmMessage = MessageFormat.format(
-                messages.getString("challenge.confirm.message"),
+        // Локализованный текст — для пользователя!
+        String eventTitle = eventManager.getEventTitle(marker);
+        String confirmMessage = java.text.MessageFormat.format(
+                eventManager.getMessages().getString("challenge.confirm.message"),
                 eventTitle
         );
         int result = JOptionPane.showConfirmDialog(
                 this,
                 confirmMessage,
-                messages.getString("challenge.confirm.title"),
+                eventManager.getMessages().getString("challenge.confirm.title"),
                 JOptionPane.YES_NO_OPTION
         );
         paused = false;
@@ -250,7 +252,7 @@ public class WormMapPanel extends JPanel {
                 this::resumeGame,
                 onExitToMenu,
                 onExitToDesktop,
-                onLanguageChanged
+                onLanguageChanged // <-- вот он, глобальный колбэк
         );
     }
 

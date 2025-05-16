@@ -25,7 +25,7 @@ class WindowProfileManagerTest {
 
         when(messages.getString(anyString())).thenAnswer(inv -> inv.getArguments()[0] + "_msg");
 
-        wpm = new WindowProfileManager(frame, messages, desktopPane, gsm);
+        wpm = new WindowProfileManager(frame, desktopPane, gsm);
     }
 
     @AfterEach

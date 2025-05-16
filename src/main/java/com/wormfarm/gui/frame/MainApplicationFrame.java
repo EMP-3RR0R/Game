@@ -1,5 +1,7 @@
 package com.wormfarm.gui.frame;
 
+import com.wormfarm.gui.base.BaseInternalFrame;
+import com.wormfarm.gui.panel.MainMenuPanel;
 import com.wormfarm.gui.state.AppStateRestorer;
 import com.wormfarm.gui.state.GameSessionManager;
 import com.wormfarm.gui.state.WindowProfileManager;
@@ -55,9 +57,12 @@ public class MainApplicationFrame extends JFrame {
 
         // --- Инициализация менеджеров ---
         this.gameSessionManager = new GameSessionManager(this, settings, messages, desktopPane);
-        this.dialogManager = new DialogManager(this, messages, gameSessionManager);
-        this.gameSessionManager.setDialogManager(dialogManager); // ВАЖНО!
-        this.windowProfileManager = new WindowProfileManager(this, messages, desktopPane, gameSessionManager);
+        this.dialogManager = new DialogManager(this, messages, gameSessionManager, this::updateLocale);
+        this.gameSessionManager.setDialogManager(dialogManager);
+        this.windowProfileManager = new WindowProfileManager(this, desktopPane, gameSessionManager);
+
+        // ВАЖНО: пробрасываем главный колбэк смены локали
+        this.gameSessionManager.setOnLocaleChange(this::updateLocale);
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -74,7 +79,6 @@ public class MainApplicationFrame extends JFrame {
                     windowProfileManager.saveWindowsProfile();
                     dialogManager.saveDialogStates();
                     dispose();
-                    // ГАРАНТИРОВАННОЕ завершение процесса (решает проблему висящего процесса)
                     System.exit(0);
                 }
             }
@@ -97,8 +101,30 @@ public class MainApplicationFrame extends JFrame {
 
         gameSessionManager.showMainMenu();
 
-        // Восстановление состояния приложения
         new AppStateRestorer(this, messages, gameSessionManager, windowProfileManager, dialogManager).tryRestoreAppState();
     }
 
+    public void updateLocale() {
+        AppLocale.setLocale(settings.getLanguage());
+        messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
+        setTitle(messages.getString("app.title"));
+        setJMenuBar(windowProfileManager.createMenuBarProfiles());
+        revalidate();
+        repaint();
+
+        // Обновить все внутренние окна
+        for (JInternalFrame frame : desktopPane.getAllFrames()) {
+            if (frame instanceof BaseInternalFrame bframe) {
+                bframe.updateLocale();
+            }
+        }
+        // Обновить все панели, если они поддерживают updateTexts/updateLocale
+        for (Component comp : desktopPane.getComponents()) {
+            if (comp instanceof JPanel panel) {
+                try {
+                    panel.getClass().getMethod("updateTexts").invoke(panel);
+                } catch (Exception ignored) {}
+            }
+        }
+    }
 }

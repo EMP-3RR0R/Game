@@ -31,9 +31,16 @@ public class GameSessionManager {
     private String lastLoadedSaveName = null;
     private DialogManager dialogManager;
 
-    // Для задержки событий после закрытия "останавливающих" окон
     private boolean canActivateEvent = true;
     private Timer delayedEventTimer = null;
+
+    private Runnable onLocaleChange = null;
+    public void setOnLocaleChange(Runnable onLocaleChange) {
+        this.onLocaleChange = onLocaleChange;
+    }
+    public Runnable getOnLocaleChange() {
+        return onLocaleChange;
+    }
 
     public GameSessionManager(JFrame frame, UserSettings settings, ResourceBundle messages, JDesktopPane desktopPane) {
         this.frame = frame;
@@ -70,7 +77,7 @@ public class GameSessionManager {
                 this::continueGame,
                 this::startNewGame,
                 this::loadGame,
-                this::openSettings,
+                () -> { if (onLocaleChange != null) onLocaleChange.run(); },
                 this::exitGame,
                 !WormSaveManager.listSaves().isEmpty(),
                 settings
@@ -88,6 +95,8 @@ public class GameSessionManager {
         WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
         currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, frame, statsManager, settings);
+        currentMapPanel.setGameSessionManager(this);
+        currentMapPanel.setOnLanguageChanged(getOnLocaleChange());
         currentMapPanel.setDesktopPane(desktopPane);
         currentMapPanel.setOnExitToMenu(this::showMainMenu);
         currentMapPanel.setOnExitToDesktop(this::exitGame);
@@ -110,6 +119,8 @@ public class GameSessionManager {
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
             currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, frame, statsManager, settings);
+            currentMapPanel.setGameSessionManager(this);
+            currentMapPanel.setOnLanguageChanged(getOnLocaleChange());
             currentMapPanel.setDesktopPane(desktopPane);
             currentMapPanel.setOnExitToMenu(this::showMainMenu);
             currentMapPanel.setOnExitToDesktop(this::exitGame);
@@ -162,6 +173,8 @@ public class GameSessionManager {
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
             currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, frame, statsManager, settings);
+            currentMapPanel.setGameSessionManager(this);
+            currentMapPanel.setOnLanguageChanged(getOnLocaleChange());
             currentMapPanel.setDesktopPane(desktopPane);
             currentMapPanel.setOnExitToMenu(this::showMainMenu);
             currentMapPanel.setOnExitToDesktop(this::exitGame);
@@ -203,6 +216,8 @@ public class GameSessionManager {
         this.currentEventMap = new EventMapModel();
         WormStatsManager sm = new WormStatsManager(this.currentWormStats);
         this.currentMapPanel = new WormMapPanel(this.currentWormState, this.currentEventMap, frame, sm, settings);
+        this.currentMapPanel.setGameSessionManager(this);
+        this.currentMapPanel.setOnLanguageChanged(getOnLocaleChange());
         this.currentMapPanel.setDesktopPane(desktopPane);
         this.currentMapPanel.setOnExitToMenu(this::showMainMenu);
         this.currentMapPanel.setOnExitToDesktop(this::exitGame);

@@ -17,14 +17,16 @@ public class DialogManager {
     private final JFrame frame;
     private final ResourceBundle messages;
     private final GameSessionManager gameSessionManager;
+    private final Runnable onLanguageChange;
 
     private final DialogStateManager dialogStateManager = new DialogStateManager();
     final List<JDialog> openDialogs = new ArrayList<>();
 
-    public DialogManager(JFrame frame, ResourceBundle messages, GameSessionManager gameSessionManager) {
+    public DialogManager(JFrame frame, ResourceBundle messages, GameSessionManager gameSessionManager, Runnable onLanguageChange) {
         this.frame = frame;
         this.messages = messages;
         this.gameSessionManager = gameSessionManager;
+        this.onLanguageChange = onLanguageChange;
     }
 
     public void addDialog(JDialog dialog) {
@@ -62,7 +64,7 @@ public class DialogManager {
                         addDialog(saveDlg);
                         return saveDlg;
                     case "settings.dialog":
-                        SettingsDialog settingsDlg = new SettingsDialog(owner, null, gameSessionManager.getSettings());
+                        SettingsDialog settingsDlg = new SettingsDialog(owner, onLanguageChange, gameSessionManager.getSettings()); // <--- передаём колбэк!
                         settingsDlg.importState(state);
                         addDialog(settingsDlg);
                         return settingsDlg;
@@ -91,7 +93,7 @@ public class DialogManager {
     }
 
     public void showSettingsDialog() {
-        SettingsDialog dlg = new SettingsDialog(frame, null, gameSessionManager.getSettings());
+        SettingsDialog dlg = new SettingsDialog(frame, onLanguageChange, gameSessionManager.getSettings()); // <--- передаём колбэк!
         addDialog(dlg);
         dlg.setVisible(true);
         removeDialog(dlg);

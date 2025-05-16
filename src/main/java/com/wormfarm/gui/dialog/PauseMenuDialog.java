@@ -147,8 +147,8 @@ public class PauseMenuDialog extends BaseInternalFrame {
         btnSettings.setPreferredSize(new Dimension(220, 36));
         btnSettings.addActionListener(e -> {
             SettingsDialog settingsDialog = new SettingsDialog(getFrameAncestor(), () -> {
-                updateTexts();
                 if (this.onLanguageChanged != null) this.onLanguageChanged.run();
+                updateTexts();
             }, settings);
             settingsDialog.setLocationRelativeTo(parentComponent != null ? parentComponent : getFrameAncestor());
             settingsDialog.setVisible(true);

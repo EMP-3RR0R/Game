@@ -8,6 +8,7 @@ import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.core.logic.WormSaveManager;
 import com.wormfarm.core.model.WormStats;
 import com.wormfarm.settings.UserSettings;
+import com.wormfarm.settings.AppLocale;
 
 import javax.swing.*;
 import java.io.*;
@@ -16,7 +17,6 @@ import java.util.*;
 
 public class WindowProfileManager {
     private final JFrame frame;
-    private final ResourceBundle messages;
     private final JDesktopPane desktopPane;
     private final GameSessionManager gameSessionManager;
     private final WindowStateManager windowStateManager = new WindowStateManager();
@@ -32,9 +32,8 @@ public class WindowProfileManager {
         public java.util.List<InternalFrameState> frames;
     }
 
-    public WindowProfileManager(JFrame frame, ResourceBundle messages, JDesktopPane desktopPane, GameSessionManager gameSessionManager) {
+    public WindowProfileManager(JFrame frame, JDesktopPane desktopPane, GameSessionManager gameSessionManager) {
         this.frame = frame;
-        this.messages = messages;
         this.desktopPane = desktopPane;
         this.gameSessionManager = gameSessionManager;
     }
@@ -113,6 +112,7 @@ public class WindowProfileManager {
 
     public void restoreWindowsProfile(int profileNumber) {
         try {
+            ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
             Path dir = Paths.get(PROFILES_DIR);
             File file = dir.resolve("profile" + profileNumber + ".state.bin").toFile();
             Path autoSavePath = dir.resolve("profile" + profileNumber).resolve("autosave.bin");
@@ -257,6 +257,7 @@ public class WindowProfileManager {
     }
 
     public JMenuBar createMenuBarProfiles() {
+        ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
         JMenuBar menuBar = new JMenuBar();
 
         JMenu profilesMenu = new JMenu(messages.getString("menu.profiles"));

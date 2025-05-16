@@ -71,7 +71,6 @@ public class AppStateRestorer {
                 if (dialogsStateExists) dialogManager.restoreDialogStates();
                 return true;
             }
-            // если выбрано "Не загружать профиль" или закрыт диалог — ничего не делаем
         }
         return false;
     }

@@ -10,7 +10,19 @@ import java.util.ResourceBundle;
 
 public class MainMenuPanel extends JPanel {
 
-    public MainMenuPanel(Runnable onContinue, Runnable onNewGame, Runnable onLoadGame, Runnable onSettings, Runnable onExit, boolean hasSaves, UserSettings settings) {
+    private JDialog settingsDialog;
+    private final Runnable onSettings; // <-- final
+    private final UserSettings settings;
+
+    public MainMenuPanel(
+            Runnable onContinue,
+            Runnable onNewGame,
+            Runnable onLoadGame,
+            Runnable onSettings, // <-- сюда передаём mainFrame::updateLocale
+            Runnable onExit,
+            boolean hasSaves,
+            UserSettings settings
+    ) {
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridy = 0;
@@ -54,24 +66,25 @@ public class MainMenuPanel extends JPanel {
         this.settings = settings;
     }
 
-    private JDialog settingsDialog;
-    private Runnable onSettings;
-    private final UserSettings settings;
-
     private void showSettingsDialog() {
         if (settingsDialog != null && settingsDialog.isShowing()) {
             settingsDialog.toFront();
             return;
         }
-        settingsDialog = new SettingsDialog(SwingUtilities.getWindowAncestor(this), () -> {
-            updateTexts();
-            if (onSettings != null) onSettings.run();
-        }, settings);
+        // Важно: вызывать глобальный колбэк!
+        settingsDialog = new SettingsDialog(
+                SwingUtilities.getWindowAncestor(this),
+                () -> {
+                    if (onSettings != null) onSettings.run(); // <-- теперь только это!
+                    updateTexts(); // Можно оставить, чтобы кнопки тоже обновились мгновенно
+                },
+                settings
+        );
         settingsDialog.setLocationRelativeTo(this);
         settingsDialog.setVisible(true);
     }
 
-    private void updateTexts() {
+    public void updateTexts() {
         ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
         ((JButton)getComponent(0)).setText(messages.getString("main.menu.continue"));
         ((JButton)getComponent(1)).setText(messages.getString("main.menu.newgame"));

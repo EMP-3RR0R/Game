@@ -14,6 +14,7 @@ class DialogManagerTest {
     JFrame frame;
     ResourceBundle messages;
     GameSessionManager gsm;
+    Runnable onLanguageChange;
     DialogManager manager;
 
     @BeforeEach
@@ -21,7 +22,8 @@ class DialogManagerTest {
         frame = mock(JFrame.class);
         messages = mock(ResourceBundle.class);
         gsm = mock(GameSessionManager.class);
-        manager = new DialogManager(frame, messages, gsm);
+        onLanguageChange = mock(Runnable.class);
+        manager = new DialogManager(frame, messages, gsm, onLanguageChange);
 
         UserSettings us = mock(UserSettings.class);
         when(us.getLanguage()).thenReturn("en");
