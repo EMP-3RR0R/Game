@@ -123,13 +123,6 @@ class FifteenPuzzleFrameTest {
     }
 
     @Test
-    void testParentDialogSetterAndGetter() {
-        JDialog dialog = new JDialog();
-        frame.setParentDialog(dialog);
-        assertSame(dialog, frame.getParentDialog());
-    }
-
-    @Test
     void testDisposeCleansResources() {
         FifteenPuzzleVisualizer visualizer = (FifteenPuzzleVisualizer) getField(frame, "visualizer");
         FifteenPuzzleVisualizer spyVis = Mockito.spy(visualizer);

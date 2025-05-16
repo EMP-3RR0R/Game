@@ -14,7 +14,6 @@ public class WindowStateManager {
         frameStates.clear();
         Set<String> uniqueKeys = new HashSet<>();
         for (JInternalFrame frame : desktopPane.getAllFrames()) {
-            // ВАЖНО: Сохраняем только видимые окна!
             if (!frame.isVisible()) continue;
 
             String windowKey = (frame instanceof BaseInternalFrame)
@@ -43,21 +42,32 @@ public class WindowStateManager {
                         state.iconY = p.y;
                     } catch (Exception ignored) {}
                 }
+                // Для не-BIF окон — на всякий случай заполним normalX, etc:
+                state.normalX = state.x;
+                state.normalY = state.y;
+                state.normalWidth = state.width;
+                state.normalHeight = state.height;
             }
             frameStates.add(state);
+            System.out.printf("[DEBUG captureStates] %s: x=%d y=%d w=%d h=%d | normalX=%d normalY=%d normalW=%d normalH=%d | max=%b icon=%b selected=%b visible=%b\n",
+                    state.windowKey, state.x, state.y, state.width, state.height, state.normalX, state.normalY, state.normalWidth, state.normalHeight,
+                    state.maximum, state.icon, state.selected, state.visible);
         }
     }
 
     public List<String> restoreStates(JDesktopPane desktopPane, BiFunction<String, InternalFrameState, JInternalFrame> factory) {
         List<String> restored = new ArrayList<>();
         for (InternalFrameState state : frameStates) {
+            System.out.printf("[DEBUG restoreStates] Восстановление окна: %s\n", state.windowKey);
             JInternalFrame frame = factory.apply(state.windowKey, state);
             if (frame == null) continue;
 
             frame.setIconifiable(true);
             frame.setClosable(true);
 
-            frame.setBounds(state.x, state.y, state.width, state.height);
+            if (!(frame instanceof BaseInternalFrame)) {
+                frame.setBounds(state.x, state.y, state.width, state.height);
+            }
             desktopPane.add(frame, JLayeredPane.MODAL_LAYER);
             frame.setVisible(state.visible);
 
@@ -67,13 +77,13 @@ public class WindowStateManager {
                 try { frame.setIcon(state.icon); } catch (Exception ignored) {}
                 try { frame.setMaximum(state.maximum); } catch (Exception ignored) {}
                 try { frame.setSelected(state.selected); } catch (Exception ignored) {}
-                // --- Восстанавливаем положение иконки
                 if (state.icon && state.iconX >= 0 && state.iconY >= 0) {
                     SwingUtilities.invokeLater(() -> {
                         try {
                             frame.getDesktopIcon().setLocation(state.iconX, state.iconY);
                             frame.getDesktopIcon().revalidate();
                             frame.getDesktopIcon().repaint();
+                            System.out.printf("[DEBUG restoreStates] getDesktopIcon().setLocation(%d, %d)\n", state.iconX, state.iconY);
                         } catch (Exception ignored) {}
                     });
                 }
