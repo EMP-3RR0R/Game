@@ -4,6 +4,7 @@ import com.wormfarm.core.logic.WormSaveManager;
 import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.gui.base.BaseInternalFrame;
+import com.wormfarm.gui.panel.WormMapPanel;
 import com.wormfarm.gui.state.GameSessionManager;
 import com.wormfarm.settings.AppLocale;
 import com.wormfarm.settings.SettingsDialog;
@@ -197,6 +198,11 @@ public class PauseMenuDialog extends BaseInternalFrame {
             public void internalFrameClosed(javax.swing.event.InternalFrameEvent e) {
                 if (gameSessionManager != null) {
                     gameSessionManager.onResumableWindowClosed();
+                    // Гарантированный repaint всей карты после закрытия паузы (MODAL_LAYER)
+                    WormMapPanel mapPanel = gameSessionManager.getCurrentMapPanel();
+                    if (mapPanel != null) {
+                        mapPanel.repaint();
+                    }
                 }
             }
         });

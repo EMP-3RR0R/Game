@@ -10,6 +10,8 @@ import com.wormfarm.settings.AppLocale;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -89,7 +91,6 @@ public class WormMapEventManager {
                 puzzleFrame.setClosable(true);
                 puzzleFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-                // --- только через customCloseHandler! ---
                 puzzleFrame.setCustomCloseHandler(frame -> {
                     int confirm = JOptionPane.showConfirmDialog(
                             frame,
@@ -98,7 +99,6 @@ public class WormMapEventManager {
                             JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE
                     );
-                    // Если пользователь выбрал "Да" — закрыть окно, иначе ничего не делать
                     return confirm == JOptionPane.YES_OPTION;
                 });
 
@@ -109,13 +109,24 @@ public class WormMapEventManager {
                     }
                 });
 
+                // repaint карты при перемещении/изменении размера окна пятнашек
+                puzzleFrame.addComponentListener(new ComponentAdapter() {
+                    @Override
+                    public void componentMoved(ComponentEvent e) {
+                        panel.repaint();
+                    }
+                    @Override
+                    public void componentResized(ComponentEvent e) {
+                        panel.repaint();
+                    }
+                });
+
                 desktopPane.add(puzzleFrame, JLayeredPane.MODAL_LAYER);
                 puzzleFrame.setVisible(true);
                 try {
                     puzzleFrame.setSelected(true);
                 } catch (Exception ignored) {}
 
-                // Центрируем
                 int x = (desktopPane.getWidth() - puzzleFrame.getWidth()) / 2;
                 int y = (desktopPane.getHeight() - puzzleFrame.getHeight()) / 2;
                 puzzleFrame.setLocation(Math.max(0, x), Math.max(0, y));

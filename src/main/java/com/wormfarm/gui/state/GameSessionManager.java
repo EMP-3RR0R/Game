@@ -71,8 +71,16 @@ public class GameSessionManager {
         }
     }
 
-    public void showMainMenu() {
+    private void clearDesktopPaneAndShutdown() {
+        // Останавливаем таймеры, удаляем старую карту и все компоненты
         shutdownCurrentMapPanel();
+        desktopPane.removeAll();
+        desktopPane.revalidate();
+        desktopPane.repaint();
+    }
+
+    public void showMainMenu() {
+        clearDesktopPaneAndShutdown();
         frame.setContentPane(new MainMenuPanel(
                 this::continueGame,
                 this::startNewGame,
@@ -87,7 +95,7 @@ public class GameSessionManager {
     }
 
     public void startNewGame() {
-        shutdownCurrentMapPanel();
+        clearDesktopPaneAndShutdown();
         currentWormState = new WormState(100, 100, 0);
         currentEventMap = new EventMapModel();
         currentWormStats = new WormStats(0);
@@ -102,7 +110,6 @@ public class GameSessionManager {
         currentMapPanel.setOnExitToDesktop(this::exitGame);
 
         frame.setContentPane(desktopPane);
-        desktopPane.removeAll();
         currentMapPanel.setBounds(0, 0, desktopPane.getWidth(), desktopPane.getHeight());
         desktopPane.add(currentMapPanel, JLayeredPane.DEFAULT_LAYER);
 
@@ -115,7 +122,7 @@ public class GameSessionManager {
 
     public void continueGame() {
         if (currentWormState != null && currentWormStats != null) {
-            shutdownCurrentMapPanel();
+            clearDesktopPaneAndShutdown();
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
             currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, frame, statsManager, settings);
@@ -126,7 +133,6 @@ public class GameSessionManager {
             currentMapPanel.setOnExitToDesktop(this::exitGame);
 
             frame.setContentPane(desktopPane);
-            desktopPane.removeAll();
             currentMapPanel.setBounds(0, 0, desktopPane.getWidth(), desktopPane.getHeight());
             desktopPane.add(currentMapPanel, JLayeredPane.DEFAULT_LAYER);
 
@@ -165,7 +171,7 @@ public class GameSessionManager {
 
     public void loadSpecificGame(String saveName) {
         try {
-            shutdownCurrentMapPanel();
+            clearDesktopPaneAndShutdown();
             currentWormState = new WormState(100, 100, 0);
             currentEventMap = new EventMapModel();
             currentWormStats = new WormStats(0);
@@ -187,7 +193,6 @@ public class GameSessionManager {
             );
 
             frame.setContentPane(desktopPane);
-            desktopPane.removeAll();
             currentMapPanel.setBounds(0, 0, desktopPane.getWidth(), desktopPane.getHeight());
             desktopPane.add(currentMapPanel, JLayeredPane.DEFAULT_LAYER);
 
@@ -210,7 +215,7 @@ public class GameSessionManager {
     }
 
     public void setGameState(WormState state, WormStatsManager statsManager) {
-        shutdownCurrentMapPanel();
+        clearDesktopPaneAndShutdown();
         this.currentWormState = state;
         this.currentWormStats = statsManager.getStats();
         this.currentEventMap = new EventMapModel();
@@ -222,7 +227,6 @@ public class GameSessionManager {
         this.currentMapPanel.setOnExitToMenu(this::showMainMenu);
         this.currentMapPanel.setOnExitToDesktop(this::exitGame);
         frame.setContentPane(desktopPane);
-        desktopPane.removeAll();
         currentMapPanel.setBounds(0, 0, desktopPane.getWidth(), desktopPane.getHeight());
         desktopPane.add(currentMapPanel, JLayeredPane.DEFAULT_LAYER);
         frame.revalidate();
