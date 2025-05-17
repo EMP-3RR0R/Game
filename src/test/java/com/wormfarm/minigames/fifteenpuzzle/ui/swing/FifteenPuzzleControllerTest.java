@@ -1,13 +1,18 @@
-/*package com.wormfarm.minigames.fifteenpuzzle.ui.swing;
+package com.wormfarm.minigames.fifteenpuzzle.ui.swing;
 
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.core.model.WormStats;
+import com.wormfarm.minigames.fifteenpuzzle.events.PuzzleEventListener;
 import com.wormfarm.minigames.fifteenpuzzle.logic.ClassicFifteenPuzzleLogic;
+import com.wormfarm.util.SoundUtils;
 import org.junit.jupiter.api.*;
-import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
 
 import javax.swing.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Field;
+import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -21,6 +26,7 @@ class FifteenPuzzleControllerTest {
     WormStats stats;
     WormStatsManager statsManager;
     FifteenPuzzleController controller;
+    ArgumentCaptor<MouseAdapter> mouseCaptor;
 
     @BeforeEach
     void setUp() {
@@ -29,12 +35,17 @@ class FifteenPuzzleControllerTest {
         parent = new JPanel();
         stats = new WormStats(0);
         statsManager = spy(new WormStatsManager(stats));
-        controller = new FifteenPuzzleController(logic, visualizer, parent, statsManager);
+        mouseCaptor = ArgumentCaptor.forClass(MouseAdapter.class);
+
+        // Capture MouseAdapter instead of using getMouseListeners()
+        doNothing().when(visualizer).addMouseListener(mouseCaptor.capture());
+
+        controller = new FifteenPuzzleController(logic, visualizer, parent, statsManager, null);
     }
 
     private void setBoard(ClassicFifteenPuzzleLogic logic, int[][] board) {
         try {
-            var f = ClassicFifteenPuzzleLogic.class.getDeclaredField("board");
+            Field f = ClassicFifteenPuzzleLogic.class.getDeclaredField("board");
             f.setAccessible(true);
             f.set(logic, board);
         } catch (Exception e) {
@@ -53,9 +64,11 @@ class FifteenPuzzleControllerTest {
         setBoard(logic, board);
         visualizer.setSize(200, 200);
 
-        try (var mocked = Mockito.mockStatic(SoundUtils.class)) {
+        MouseAdapter adapter = mouseCaptor.getValue();
+
+        try (var mocked = mockStatic(SoundUtils.class)) {
             MouseEvent e = new MouseEvent(visualizer, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 2 * 50 + 1, 3 * 50 + 1, 1, false);
-            for (var l : visualizer.getMouseListeners()) l.mouseClicked(e);
+            adapter.mouseClicked(e);
 
             verify(logic).moveTile(3, 2);
             verify(visualizer).animateMove(eq(15), eq(3), eq(2), eq(3), eq(3), any());
@@ -74,9 +87,11 @@ class FifteenPuzzleControllerTest {
         setBoard(logic, board);
         visualizer.setSize(200, 200);
 
-        try (var mocked = Mockito.mockStatic(SoundUtils.class)) {
+        MouseAdapter adapter = mouseCaptor.getValue();
+
+        try (var mocked = mockStatic(SoundUtils.class)) {
             MouseEvent e = new MouseEvent(visualizer, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 1, 1, 1, false);
-            for (var l : visualizer.getMouseListeners()) l.mouseClicked(e);
+            adapter.mouseClicked(e);
 
             verify(logic).moveTile(0, 0);
             verify(visualizer).animateShake(1);
@@ -95,8 +110,10 @@ class FifteenPuzzleControllerTest {
         setBoard(logic, board);
         visualizer.setSize(200, 200);
 
+        MouseAdapter adapter = mouseCaptor.getValue();
+
         MouseEvent e = new MouseEvent(visualizer, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 1000, 1000, 1, false);
-        for (var l : visualizer.getMouseListeners()) l.mouseClicked(e);
+        adapter.mouseClicked(e);
 
         verify(logic, never()).moveTile(anyInt(), anyInt());
         verify(visualizer, never()).animateMove(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
@@ -105,13 +122,15 @@ class FifteenPuzzleControllerTest {
 
     @Test
     void testClickWhenGameOverDoesNothing() throws Exception {
-        var f = FifteenPuzzleController.class.getDeclaredField("gameOver");
+        Field f = FifteenPuzzleController.class.getDeclaredField("gameOver");
         f.setAccessible(true);
         f.set(controller, true);
         visualizer.setSize(200, 200);
 
+        MouseAdapter adapter = mouseCaptor.getValue();
+
         MouseEvent e = new MouseEvent(visualizer, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 1, 1, 1, false);
-        for (var l : visualizer.getMouseListeners()) l.mouseClicked(e);
+        adapter.mouseClicked(e);
 
         verify(logic, never()).moveTile(anyInt(), anyInt());
         verify(visualizer, never()).animateMove(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
@@ -123,8 +142,10 @@ class FifteenPuzzleControllerTest {
         when(visualizer.isAnimating()).thenReturn(true);
         visualizer.setSize(200, 200);
 
+        MouseAdapter adapter = mouseCaptor.getValue();
+
         MouseEvent e = new MouseEvent(visualizer, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 1, 1, 1, false);
-        for (var l : visualizer.getMouseListeners()) l.mouseClicked(e);
+        adapter.mouseClicked(e);
 
         verify(logic, never()).moveTile(anyInt(), anyInt());
         verify(visualizer, never()).animateMove(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
@@ -139,10 +160,14 @@ class FifteenPuzzleControllerTest {
         JPanel parent = new JPanel();
         WormStats stats = new WormStats(0);
         WormStatsManager statsManager = spy(new WormStatsManager(stats));
-        FifteenPuzzleController controller = new FifteenPuzzleController(logic, visualizer, parent, statsManager);
+        FifteenPuzzleFrame frame = mock(FifteenPuzzleFrame.class);
+        when(frame.getMessages()).thenReturn(ResourceBundle.getBundle("com.wormfarm.gui.messages"));
+        ArgumentCaptor<MouseAdapter> winMouseCaptor = ArgumentCaptor.forClass(MouseAdapter.class);
+        doNothing().when(visualizer).addMouseListener(winMouseCaptor.capture());
+        FifteenPuzzleController controller = new FifteenPuzzleController(logic, visualizer, parent, statsManager, frame);
 
-        try (var mockedSound = Mockito.mockStatic(SoundUtils.class);
-             var mockedOptionPane = Mockito.mockStatic(JOptionPane.class)) {
+        try (var mockedSound = mockStatic(SoundUtils.class);
+             var mockedOptionPane = mockStatic(JOptionPane.class)) {
             mockedOptionPane.when(() -> JOptionPane.showOptionDialog(any(), any(), any(), anyInt(), anyInt(), any(), any(), any()))
                     .thenReturn(0);
 
@@ -158,20 +183,22 @@ class FifteenPuzzleControllerTest {
     }
 
     @Test
-    void testHandleWinOnEdt_HandlesReturnToAdventureAndClosesDialogAndIncrementsCoins() {
-        JDialog dlg = mock(JDialog.class);
+    void testHandleWinOnEdt_HandlesReturnToAdventureAndClosesInternalFrameAndIncrementsCoins() {
+        JInternalFrame dlg = mock(JInternalFrame.class);
         FifteenPuzzleFrame frame = mock(FifteenPuzzleFrame.class);
-        when(frame.getParentDialog()).thenReturn(dlg);
+        when(frame.getMessages()).thenReturn(ResourceBundle.getBundle("com.wormfarm.gui.messages"));
 
         ClassicFifteenPuzzleLogic logic = spy(new ClassicFifteenPuzzleLogic(4));
         FifteenPuzzleVisualizer visualizer = spy(new FifteenPuzzleVisualizer(4, 50, logic));
         visualizer.setSize(200, 200);
         WormStats stats = new WormStats(0);
         WormStatsManager statsManager = spy(new WormStatsManager(stats));
-        FifteenPuzzleController ctrl = new FifteenPuzzleController(logic, visualizer, frame, statsManager);
+        ArgumentCaptor<MouseAdapter> winMouseCaptor = ArgumentCaptor.forClass(MouseAdapter.class);
+        doNothing().when(visualizer).addMouseListener(winMouseCaptor.capture());
+        FifteenPuzzleController ctrl = new FifteenPuzzleController(logic, visualizer, dlg, statsManager, frame);
 
-        try (var mockedSound = Mockito.mockStatic(SoundUtils.class);
-             var mockedOptionPane = Mockito.mockStatic(JOptionPane.class)) {
+        try (var mockedSound = mockStatic(SoundUtils.class);
+             var mockedOptionPane = mockStatic(JOptionPane.class)) {
             mockedOptionPane.when(() -> JOptionPane.showOptionDialog(any(), any(), any(), anyInt(), anyInt(), any(), any(), any()))
                     .thenReturn(1);
             ctrl.handleWinOnEdt();
@@ -187,23 +214,24 @@ class FifteenPuzzleControllerTest {
         FifteenPuzzleVisualizer visualizer = spy(new FifteenPuzzleVisualizer(4, 50, logic));
         JPanel parent = new JPanel();
         WormStatsManager statsManager = mock(WormStatsManager.class);
-        FifteenPuzzleController ctrl = new FifteenPuzzleController(logic, visualizer, parent, statsManager);
+        ArgumentCaptor<MouseAdapter> mouseCaptor = ArgumentCaptor.forClass(MouseAdapter.class);
+        doNothing().when(visualizer).addMouseListener(mouseCaptor.capture());
+        FifteenPuzzleController ctrl = new FifteenPuzzleController(logic, visualizer, parent, statsManager, null);
 
-        com.wormfarm.minigames.fifteenpuzzle.events.PuzzleEventListener listener = null;
-        for (var l : logic.getClass().getDeclaredFields()) {
-            if (l.getType().getName().contains("List")) {
-                l.setAccessible(true);
-                try {
-                    var list = (java.util.List<?>) l.get(logic);
-                    for (var obj : list) {
-                        if (obj instanceof com.wormfarm.minigames.fifteenpuzzle.events.PuzzleEventListener) listener = (com.wormfarm.minigames.fifteenpuzzle.events.PuzzleEventListener) obj;
-                    }
-                } catch (Exception ignored) {}
+        // Найти PuzzleEventListener через рефлексию
+        PuzzleEventListener listener = null;
+        try {
+            Field listenersField = ClassicFifteenPuzzleLogic.class.getDeclaredField("listeners");
+            listenersField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.List<PuzzleEventListener> listeners = (java.util.List<PuzzleEventListener>) listenersField.get(logic);
+            for (Object obj : listeners) {
+                if (obj instanceof PuzzleEventListener) listener = (PuzzleEventListener) obj;
             }
-        }
+        } catch (Exception ignored) {}
         assertNotNull(listener, "Listener must be attached");
         listener.onMove(1, 1, true);
         verify(visualizer, never()).setBoard(any());
         verify(visualizer, never()).repaint();
     }
-}*/
+}

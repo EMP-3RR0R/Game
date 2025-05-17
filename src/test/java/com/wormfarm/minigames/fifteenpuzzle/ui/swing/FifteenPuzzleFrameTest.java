@@ -130,8 +130,26 @@ class FifteenPuzzleFrameTest {
 
         frame.dispose();
 
-        Mockito.verify(spyVis).clearSprites();
+        Mockito.verify(spyVis, Mockito.times(1)).clearSprites();
         assertFalse(frame.isDisplayable());
+    }
+
+    // Добавлено: тест на setMaximum/setIcon & restore
+    @Test
+    void testMaximizeAndIconifyRestore() throws Exception {
+        frame.setVisible(true);
+        frame.setBounds(10, 20, 300, 200);
+        frame.setMaximum(true);
+        assertTrue(frame.isMaximum());
+
+        frame.setIcon(true);
+        assertTrue(frame.isIcon());
+
+        frame.setIcon(false);
+        assertFalse(frame.isIcon());
+
+        frame.setMaximum(false);
+        assertFalse(frame.isMaximum());
     }
 
     private Object getField(Object obj, String name) {

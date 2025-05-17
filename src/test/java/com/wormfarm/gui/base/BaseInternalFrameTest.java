@@ -25,7 +25,7 @@ class BaseInternalFrameTest {
     }
 
     @Test
-    void testRestoreNormalState() {
+    void testRestoreNormalState() throws Exception {
         TestInternalFrame win = new TestInternalFrame("test1");
         desktop.add(win);
         win.setBounds(120, 130, 350, 220);
@@ -35,12 +35,40 @@ class BaseInternalFrameTest {
         win.setBounds(10, 10, 100, 100);
 
         win.importState(state);
+        // Ожидание применения изменений
+        SwingUtilities.invokeAndWait(() -> {});
         assertEquals(120, win.getX());
         assertEquals(130, win.getY());
         assertEquals(350, win.getWidth());
         assertEquals(220, win.getHeight());
         assertFalse(win.isMaximum());
         assertFalse(win.isIcon());
+    }
+
+    @Test
+    void testRestoreNormalStateWithNoLastNormal() throws Exception {
+        TestInternalFrame win = new TestInternalFrame("testNoLastNormal");
+        desktop.add(win);
+        win.setBounds(150, 160, 300, 200);
+        win.setVisible(true);
+
+        InternalFrameState state = win.exportState();
+        // сбросить lastNormalX/Y
+        var f1 = BaseInternalFrame.class.getDeclaredField("lastNormalX");
+        var f2 = BaseInternalFrame.class.getDeclaredField("lastNormalY");
+        var f3 = BaseInternalFrame.class.getDeclaredField("lastNormalWidth");
+        var f4 = BaseInternalFrame.class.getDeclaredField("lastNormalHeight");
+        f1.setAccessible(true); f2.setAccessible(true); f3.setAccessible(true); f4.setAccessible(true);
+        f1.setInt(win, -1); f2.setInt(win, -1); f3.setInt(win, -1); f4.setInt(win, -1);
+
+        win.setBounds(10, 10, 100, 100);
+        win.importState(state);
+        SwingUtilities.invokeAndWait(() -> {});
+        // Должен использовать координаты из state
+        assertEquals(150, win.getX());
+        assertEquals(160, win.getY());
+        assertEquals(300, win.getWidth());
+        assertEquals(200, win.getHeight());
     }
 
     @Test
@@ -57,6 +85,7 @@ class BaseInternalFrameTest {
         win.setBounds(10, 10, 200, 200);
 
         win.importState(state);
+        SwingUtilities.invokeAndWait(() -> {});
         assertTrue(win.isMaximum());
 
         win.setMaximum(false);
@@ -80,6 +109,7 @@ class BaseInternalFrameTest {
         win.setBounds(5, 5, 50, 50);
 
         win.importState(state);
+        SwingUtilities.invokeAndWait(() -> {});
         assertTrue(win.isIcon());
         win.setIcon(false);
         assertEquals(200, win.getX());
@@ -104,6 +134,7 @@ class BaseInternalFrameTest {
         win.setBounds(10, 10, 50, 50);
 
         win.importState(state);
+        SwingUtilities.invokeAndWait(() -> {});
         assertTrue(win.isIcon());
         win.setIcon(false);
         assertTrue(win.isMaximum());
