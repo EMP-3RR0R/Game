@@ -19,7 +19,7 @@ public class FifteenPuzzleController {
     private final Component parentComponent;
     private final WormStatsManager wormStatsManager;
     private final FifteenPuzzleFrame frame;
-    private boolean gameOver = false;
+    boolean gameOver = false;
     private boolean isPaused = false;
 
     public void pauseGame() {

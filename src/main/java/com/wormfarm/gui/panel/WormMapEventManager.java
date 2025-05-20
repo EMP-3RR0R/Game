@@ -57,8 +57,11 @@ public class WormMapEventManager {
                 if (!activeMarkers.contains(marker) &&
                         (!recentlyActivated.containsKey(marker) ||
                                 now - recentlyActivated.get(marker) > 5000)) {
-                    activeMarkers.add(marker);
-                    SwingUtilities.invokeLater(() -> panel.tryActivateEvent(marker));
+                    // --- ДОБАВЛЯЕМ ПРОВЕРКУ suppression-флага ---
+                    if (panel.getGameSessionManager() == null || panel.getGameSessionManager().canActivateEvent()) {
+                        activeMarkers.add(marker);
+                        SwingUtilities.invokeLater(() -> panel.tryActivateEvent(marker));
+                    }
                 }
             } else {
                 if (activeMarkers.contains(marker)) {

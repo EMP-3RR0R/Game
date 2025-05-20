@@ -5,11 +5,14 @@ import com.wormfarm.core.model.EventMapModel;
 import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.model.WormStats;
 import com.wormfarm.core.model.AppState;
+import com.wormfarm.core.model.FarmSaveData;
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.gui.dialog.LoadGameDialog;
 import com.wormfarm.gui.panel.MainMenuPanel;
 import com.wormfarm.gui.panel.WormMapPanel;
 import com.wormfarm.settings.UserSettings;
+import com.wormfarm.farm.FarmController;
+import com.wormfarm.farm.resource.CompostSource;
 
 import javax.swing.*;
 import java.io.*;
@@ -17,6 +20,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.ArrayList;
 
 public class GameSessionManager {
     private final JFrame frame;
@@ -31,8 +35,11 @@ public class GameSessionManager {
     private String lastLoadedSaveName = null;
     private DialogManager dialogManager;
 
-    private boolean canActivateEvent = true;
-    private Timer delayedEventTimer = null;
+    private FarmController farmController;
+
+    // suppression logic
+    private int restoredResumableWindows = 0;
+    private long suppressResumableWindowsUntil = 0;
 
     private Runnable onLocaleChange = null;
     public void setOnLocaleChange(Runnable onLocaleChange) {
@@ -49,19 +56,36 @@ public class GameSessionManager {
         this.desktopPane = desktopPane;
     }
 
-    public void onResumableWindowClosed() {
-        if (getCurrentMapPanel() != null) getCurrentMapPanel().resumeGame();
-        canActivateEvent = false;
-        if (delayedEventTimer != null) delayedEventTimer.cancel();
-        delayedEventTimer = new Timer();
-        delayedEventTimer.schedule(new TimerTask() {
-            @Override
-            public void run() { canActivateEvent = true; }
-        }, 5000);
+    /**
+     * Сколько окон (маркет, пятнашки, пауза) восстановлено из профиля.
+     * Пока не закрыты все такие окна — автособытия запрещены. Когда закрыли последнее, suppression-флаг ставится на 5 секунд.
+     */
+    public void setRestoredResumableWindows(int n) {
+        this.restoredResumableWindows = n;
     }
 
+    /**
+     * Вызывать при закрытии каждого окна, требующего suppression (маркет, пятнашки, пауза).
+     * Только при закрытии последнего suppression-флаг ставится на 5 секунд.
+     */
+    public void onResumableWindowClosed() {
+        if (getCurrentMapPanel() != null) getCurrentMapPanel().resumeGame();
+        if (restoredResumableWindows > 0) {
+            restoredResumableWindows--;
+            if (restoredResumableWindows == 0) {
+                suppressResumableWindowsUntil = System.currentTimeMillis() + 5000;
+            }
+        }
+    }
+
+    /**
+     * Можно ли сейчас запускать игровые автособытия (открывать окна по таймерам/маркерам)?
+     * Пока есть открытые восстановленные окна — запрещено.
+     * После закрытия всех — suppression-флаг на 5 секунд.
+     */
     public boolean canActivateEvent() {
-        return canActivateEvent;
+        if (restoredResumableWindows > 0) return false;
+        return System.currentTimeMillis() >= suppressResumableWindowsUntil;
     }
 
     public void shutdownCurrentMapPanel() {
@@ -72,7 +96,6 @@ public class GameSessionManager {
     }
 
     private void clearDesktopPaneAndShutdown() {
-        // Останавливаем таймеры, удаляем старую карту и все компоненты
         shutdownCurrentMapPanel();
         desktopPane.removeAll();
         desktopPane.revalidate();
@@ -80,6 +103,9 @@ public class GameSessionManager {
     }
 
     public void showMainMenu() {
+        if (farmController != null) {
+            farmController.setGlobalPaused(true);
+        }
         clearDesktopPaneAndShutdown();
         frame.setContentPane(new MainMenuPanel(
                 this::continueGame,
@@ -102,7 +128,12 @@ public class GameSessionManager {
 
         WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
-        currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, frame, statsManager, settings);
+        CompostSource compostSource = new CompostSource(600, 600, 30);
+        farmController = new FarmController(compostSource, statsManager);
+
+        farmController.setGlobalPaused(false);
+
+        currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, frame, statsManager, settings, farmController);
         currentMapPanel.setGameSessionManager(this);
         currentMapPanel.setOnLanguageChanged(getOnLocaleChange());
         currentMapPanel.setDesktopPane(desktopPane);
@@ -125,7 +156,7 @@ public class GameSessionManager {
             clearDesktopPaneAndShutdown();
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
-            currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, frame, statsManager, settings);
+            currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, frame, statsManager, settings, farmController);
             currentMapPanel.setGameSessionManager(this);
             currentMapPanel.setOnLanguageChanged(getOnLocaleChange());
             currentMapPanel.setDesktopPane(desktopPane);
@@ -178,19 +209,31 @@ public class GameSessionManager {
 
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
-            currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, frame, statsManager, settings);
+            CompostSource compostSource = new CompostSource(600, 600, 30);
+            farmController = new FarmController(compostSource, statsManager);
+
+            WormSaveManager.load(
+                    currentWormState,
+                    currentWormStats,
+                    (x, y) -> {
+                        if (currentMapPanel != null) {
+                            currentMapPanel.setTarget(x, y);
+                        }
+                    },
+                    (farmSave, found) -> {
+                        if (farmSave != null) farmController.restoreFromSave(farmSave);
+                        else farmController.restoreFromSave(new FarmSaveData(new ArrayList<>(), new ArrayList<>()));
+                        farmController.setGlobalPaused(false);
+                    },
+                    saveName
+            );
+
+            currentMapPanel = new WormMapPanel(currentWormState, currentEventMap, frame, statsManager, settings, farmController);
             currentMapPanel.setGameSessionManager(this);
             currentMapPanel.setOnLanguageChanged(getOnLocaleChange());
             currentMapPanel.setDesktopPane(desktopPane);
             currentMapPanel.setOnExitToMenu(this::showMainMenu);
             currentMapPanel.setOnExitToDesktop(this::exitGame);
-
-            WormSaveManager.load(
-                    currentWormState,
-                    currentWormStats,
-                    currentMapPanel::setTarget,
-                    saveName
-            );
 
             frame.setContentPane(desktopPane);
             currentMapPanel.setBounds(0, 0, desktopPane.getWidth(), desktopPane.getHeight());
@@ -208,19 +251,40 @@ public class GameSessionManager {
         }
     }
 
-    public void openSettings() {
-        pauseGameIfPossible();
-        // ... реализация вызова настроек
-        resumeGameIfPossible();
+    public void saveCurrentGame(String saveName) {
+        try {
+            WormSaveManager.save(
+                    currentWormState,
+                    currentWormStats,
+                    getTargetX(),
+                    getTargetY(),
+                    farmController != null ? farmController.toSaveData() : new FarmSaveData(new ArrayList<>(), new ArrayList<>()),
+                    saveName
+            );
+            lastLoadedSaveName = saveName;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Ошибка сохранения: " + ex.getMessage());
+        }
     }
 
-    public void setGameState(WormState state, WormStatsManager statsManager) {
+    public void setGameStateWithFarm(WormState state, WormStatsManager statsManager, FarmSaveData farmSave) {
         clearDesktopPaneAndShutdown();
         this.currentWormState = state;
         this.currentWormStats = statsManager.getStats();
         this.currentEventMap = new EventMapModel();
+
+        CompostSource compostSource = new CompostSource(600, 600, 30);
+        this.farmController = new FarmController(compostSource, statsManager);
+        if (farmSave != null) {
+            this.farmController.restoreFromSave(farmSave);
+        } else {
+            this.farmController.restoreFromSave(new FarmSaveData(new ArrayList<>(), new ArrayList<>()));
+        }
+        this.farmController.setGlobalPaused(false);
+
         WormStatsManager sm = new WormStatsManager(this.currentWormStats);
-        this.currentMapPanel = new WormMapPanel(this.currentWormState, this.currentEventMap, frame, sm, settings);
+        this.currentMapPanel = new WormMapPanel(this.currentWormState, this.currentEventMap, frame, sm, settings, farmController);
         this.currentMapPanel.setGameSessionManager(this);
         this.currentMapPanel.setOnLanguageChanged(getOnLocaleChange());
         this.currentMapPanel.setDesktopPane(desktopPane);
@@ -232,6 +296,15 @@ public class GameSessionManager {
         frame.revalidate();
         frame.repaint();
         currentMapPanel.requestFocusInWindow();
+    }
+
+    public void openSettings() {
+        pauseGameIfPossible();
+        resumeGameIfPossible();
+    }
+
+    public void setGameState(WormState state, WormStatsManager statsManager) {
+        setGameStateWithFarm(state, statsManager, null);
     }
 
     public void exitGame() {
@@ -336,5 +409,9 @@ public class GameSessionManager {
 
     public DialogManager getDialogManager() {
         return dialogManager;
+    }
+
+    public FarmController getFarmController() {
+        return farmController;
     }
 }

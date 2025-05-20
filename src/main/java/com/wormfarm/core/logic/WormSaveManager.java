@@ -2,12 +2,17 @@ package com.wormfarm.core.logic;
 
 import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.model.WormStats;
+import com.wormfarm.core.model.FarmSaveData;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+/**
+ * Универсальный менеджер сохранений: хранит червя, статистику, ферму, координаты.
+ * Все данные сохраняются в один файл с расширением .save.
+ */
 public class WormSaveManager {
     private static String saveDir = "saves";
 
@@ -15,8 +20,8 @@ public class WormSaveManager {
         saveDir = dir;
     }
 
-    // Для обычных пользовательских сейвов по имени
-    public static void save(WormState state, WormStats stats, int targetX, int targetY, String saveName) throws IOException {
+    // Для пользовательских сейвов по имени (червь+статы+ферма+target)
+    public static void save(WormState state, WormStats stats, int targetX, int targetY, FarmSaveData farmSaveData, String saveName) throws IOException {
         validateSaveName(saveName);
         File file = new File(saveDir, saveName + ".save");
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
@@ -24,16 +29,18 @@ public class WormSaveManager {
             oos.writeObject(stats);
             oos.writeInt(targetX);
             oos.writeInt(targetY);
+            oos.writeObject(farmSaveData);
         }
     }
 
-    // Для автосейва по абсолютному пути, без проверки имени
-    public static void saveToAbsolutePath(WormState state, WormStats stats, int targetX, int targetY, String filePath) throws IOException {
+    // Для автосейва по абсолютному пути, без проверки имени (червь+статы+ферма+target)
+    public static void saveToAbsolutePath(WormState state, WormStats stats, int targetX, int targetY, FarmSaveData farmSaveData, String filePath) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
             oos.writeObject(state);
             oos.writeObject(stats);
             oos.writeInt(targetX);
             oos.writeInt(targetY);
+            oos.writeObject(farmSaveData);
         }
     }
 
@@ -42,8 +49,15 @@ public class WormSaveManager {
         return file.exists();
     }
 
-    // Для обычных пользовательских сейвов по имени
-    public static void load(WormState state, WormStats stats, BiConsumer<Integer, Integer> targetSetter, String saveName) throws IOException, ClassNotFoundException {
+    /**
+     * Загружает все данные: червя, статы, координаты и ферму.
+     * @param state объект WormState, в который копируются данные
+     * @param stats объект WormStats, в который копируются данные
+     * @param targetSetter BiConsumer<Integer, Integer> для установки координат цели
+     * @param farmSaveConsumer BiConsumer<FarmSaveData, Boolean> для восстановления фермы (FarmSaveData, найден ли сейв)
+     * @param saveName имя слота
+     */
+    public static void load(WormState state, WormStats stats, BiConsumer<Integer, Integer> targetSetter, BiConsumer<FarmSaveData, Boolean> farmSaveConsumer, String saveName) throws IOException, ClassNotFoundException {
         validateSaveName(saveName);
         File file = new File(saveDir, saveName + ".save");
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
@@ -51,22 +65,26 @@ public class WormSaveManager {
             WormStats loadedStats = (WormStats) ois.readObject();
             int x = ois.readInt();
             int y = ois.readInt();
+            FarmSaveData farmSaveData = (FarmSaveData) ois.readObject();
             state.copyFrom(loadedState);
             stats.copyFrom(loadedStats);
             targetSetter.accept(x, y);
+            farmSaveConsumer.accept(farmSaveData, true);
         }
     }
 
-    // Для автосейва по абсолютному пути, без проверки имени
-    public static void loadFromAbsolutePath(WormState state, WormStats stats, BiConsumer<Integer, Integer> targetSetter, String filePath) throws IOException, ClassNotFoundException {
+    // Для автосейва по абсолютному пути, без проверки имени (червь+статы+ферма+target)
+    public static void loadFromAbsolutePath(WormState state, WormStats stats, BiConsumer<Integer, Integer> targetSetter, BiConsumer<FarmSaveData, Boolean> farmSaveConsumer, String filePath) throws IOException, ClassNotFoundException {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
             WormState loadedState = (WormState) ois.readObject();
             WormStats loadedStats = (WormStats) ois.readObject();
             int x = ois.readInt();
             int y = ois.readInt();
+            FarmSaveData farmSaveData = (FarmSaveData) ois.readObject();
             state.copyFrom(loadedState);
             stats.copyFrom(loadedStats);
             targetSetter.accept(x, y);
+            farmSaveConsumer.accept(farmSaveData, true);
         }
     }
 

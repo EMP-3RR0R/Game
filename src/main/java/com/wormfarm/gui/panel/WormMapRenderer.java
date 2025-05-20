@@ -4,6 +4,8 @@ import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.model.EventMapModel;
 import com.wormfarm.core.model.EventMarker;
 import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.farm.FarmController;
+import com.wormfarm.farm.ui.FarmObjectsRenderer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +18,8 @@ public class WormMapRenderer {
     public static void paintWholeMap(
             JPanel panel, Graphics g, WormState worm, EventMapModel mapModel,
             int targetX, int targetY, WormStatsManager statsManager,
-            ResourceBundle messages
+            ResourceBundle messages,
+            FarmController farmController // <-- добавлен
     ) {
         Graphics2D g2d = (Graphics2D) g.create();
 
@@ -36,6 +39,11 @@ public class WormMapRenderer {
             } else {
                 drawMarker(g2d, marker);
             }
+        }
+
+        // ФЕРМА: растения, жуки, компост
+        if (farmController != null) {
+            FarmObjectsRenderer.drawFarmObjects(g2d, farmController);
         }
 
         drawWormCoinCounter(g2d, statsManager, panel.getWidth());

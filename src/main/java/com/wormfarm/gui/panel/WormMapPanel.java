@@ -4,8 +4,11 @@ import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.model.EventMapModel;
 import com.wormfarm.core.model.EventMarker;
 import com.wormfarm.core.logic.WormStatsManager;
-import com.wormfarm.gui.state.GameSessionManager;
 import com.wormfarm.settings.UserSettings;
+import com.wormfarm.farm.FarmController;
+import com.wormfarm.farm.resource.CompostSource;
+import com.wormfarm.farm.market.FarmMarketPanel;
+import com.wormfarm.farm.market.MarketMarker;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,8 +32,6 @@ public class WormMapPanel extends JPanel {
 
     private JDesktopPane desktopPane;
 
-    private volatile int targetX = 150;
-    private volatile int targetY = 100;
     private volatile boolean paused = false;
 
     private final Set<EventMarker> activeMarkers = new HashSet<>();
@@ -61,16 +62,28 @@ public class WormMapPanel extends JPanel {
     private final UserSettings settings;
     private ResourceBundle messages;
 
-    // Для связи с GameSessionManager
-    private GameSessionManager gameSessionManager;
-    public void setGameSessionManager(GameSessionManager gsm) {
+    private com.wormfarm.gui.state.GameSessionManager gameSessionManager;
+    public void setGameSessionManager(com.wormfarm.gui.state.GameSessionManager gsm) {
         this.gameSessionManager = gsm;
     }
-    public GameSessionManager getGameSessionManager() {
+    public com.wormfarm.gui.state.GameSessionManager getGameSessionManager() {
         return gameSessionManager;
     }
 
-    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame, WormStatsManager statsManager, UserSettings settings) {
+    private final FarmController farmController;
+    public FarmController getFarmController() {
+        return farmController;
+    }
+
+    private boolean marketOpen = false;
+    private long lastMarketCloseTime = 0;
+    private static final int MARKET_TIMEOUT_MS = 5000;
+
+    // --- Suppress auto-opening market on profile restore ---
+    private boolean suppressMarketOnRestore = false;
+    public void suppressMarketOnRestoreOnce() { this.suppressMarketOnRestore = true; }
+
+    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame, WormStatsManager statsManager, UserSettings settings, FarmController farmController) {
         this.worm = worm;
         this.mapModel = mapModel;
         this.ownerFrame = ownerFrame;
@@ -111,12 +124,18 @@ public class WormMapPanel extends JPanel {
                         dy = 10; break;
                 }
                 if (dx != 0 || dy != 0) {
-                    targetX = Math.max(0, Math.min(FIELD_WIDTH, targetX + dx));
-                    targetY = Math.max(0, Math.min(FIELD_HEIGHT, targetY + dy));
+                    setTarget(worm.getTargetX() + dx, worm.getTargetY() + dy);
                     repaint();
                 }
             }
         });
+
+        if (farmController != null) {
+            this.farmController = farmController;
+        } else {
+            CompostSource compostSource = new CompostSource(600, 600, 30);
+            this.farmController = new FarmController(compostSource, statsManager);
+        }
 
         timerRedraw = new Timer(50, e -> {
             if (!paused) onRedrawEvent();
@@ -124,7 +143,11 @@ public class WormMapPanel extends JPanel {
         timerRedraw.start();
 
         timerModel = new Timer(10, e -> {
-            if (!paused) onModelUpdateEvent();
+            if (!paused) {
+                farmController.tick();
+                checkMarketVisit();
+                onModelUpdateEvent();
+            }
         });
         timerModel.start();
 
@@ -152,12 +175,14 @@ public class WormMapPanel extends JPanel {
         SwingUtilities.invokeLater(this::requestFocusInWindow);
     }
 
-    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame, WormStatsManager statsManager) {
-        this(worm, mapModel, ownerFrame, statsManager, null);
+    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame, WormStatsManager statsManager, UserSettings settings) {
+        this(worm, mapModel, ownerFrame, statsManager, settings, null);
     }
-
+    public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame, WormStatsManager statsManager) {
+        this(worm, mapModel, ownerFrame, statsManager, null, null);
+    }
     public WormMapPanel(WormState worm, EventMapModel mapModel, JFrame ownerFrame) {
-        this(worm, mapModel, ownerFrame, null, null);
+        this(worm, mapModel, ownerFrame, null, null, null);
     }
 
     public void shutdown() {
@@ -170,8 +195,7 @@ public class WormMapPanel extends JPanel {
     }
 
     protected void setTargetPosition(Point p) {
-        targetX = Math.max(0, Math.min(FIELD_WIDTH, p.x));
-        targetY = Math.max(0, Math.min(FIELD_HEIGHT, p.y));
+        setTarget(p.x, p.y);
     }
 
     protected void onRedrawEvent() {
@@ -179,14 +203,13 @@ public class WormMapPanel extends JPanel {
     }
 
     protected void onModelUpdateEvent() {
-        eventManager.updateWormAndEvents(targetX, targetY, paused);
+        eventManager.updateWormAndEvents(worm.getTargetX(), worm.getTargetY(), paused);
     }
 
     void tryActivateEvent(EventMarker marker) {
         paused = true;
-        // Локализованный текст — для пользователя!
         String eventTitle = eventManager.getEventTitle(marker);
-        String confirmMessage = java.text.MessageFormat.format(
+        String confirmMessage = MessageFormat.format(
                 eventManager.getMessages().getString("challenge.confirm.message"),
                 eventTitle
         );
@@ -217,19 +240,22 @@ public class WormMapPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        WormMapRenderer.paintWholeMap(this, g, worm, mapModel, targetX, targetY, statsManager, messages);
+        WormMapRenderer.paintWholeMap(this, g, worm, mapModel, worm.getTargetX(), worm.getTargetY(), statsManager, messages, farmController);
     }
 
+    // Глобальная пауза (только для меню)
     public void pauseGame() {
         setPaused(true);
         timerRedraw.stop();
         timerModel.stop();
+        farmController.setGlobalPaused(true); // Only here!
     }
 
     public void resumeGame() {
         setPaused(false);
         timerRedraw.start();
         timerModel.start();
+        farmController.setGlobalPaused(false); // Only here!
         requestFocusInWindow();
     }
 
@@ -246,21 +272,20 @@ public class WormMapPanel extends JPanel {
     }
 
     private void showPauseMenu() {
-        pauseGame();
+        pauseGame(); // ставится глобальная пауза!
         menuHelper.showPauseMenu(
                 ownerFrame,
                 this::resumeGame,
                 onExitToMenu,
                 onExitToDesktop,
-                onLanguageChanged // <-- вот он, глобальный колбэк
+                onLanguageChanged
         );
     }
 
-    public int getTargetX() { return targetX; }
-    public int getTargetY() { return targetY; }
+    public int getTargetX() { return worm.getTargetX(); }
+    public int getTargetY() { return worm.getTargetY(); }
     public void setTarget(int x, int y) {
-        targetX = Math.max(0, Math.min(FIELD_WIDTH, x));
-        targetY = Math.max(0, Math.min(FIELD_HEIGHT, y));
+        worm.setTarget(x, y);
         repaint();
     }
     public void setDesktopPane(JDesktopPane desktopPane) {
@@ -271,5 +296,69 @@ public class WormMapPanel extends JPanel {
     }
     public WormStatsManager getStatsManager() {
         return statsManager;
+    }
+
+    private void checkMarketVisit() {
+        MarketMarker market = farmController.getMarketMarker();
+        int wormX = (int) worm.getX();
+        int wormY = (int) worm.getY();
+        long now = System.currentTimeMillis();
+
+        // --- Suppress auto-market opening after profile restore ---
+        if (suppressMarketOnRestore) {
+            suppressMarketOnRestore = false;
+            return;
+        }
+
+        if (marketOpen) return;
+        if (now - lastMarketCloseTime < MARKET_TIMEOUT_MS) return;
+
+        // --- ДОБАВЛЯЕМ ПРОВЕРКУ suppression-флага ---
+        if (gameSessionManager != null && !gameSessionManager.canActivateEvent()) return;
+
+        if (market != null && market.contains(wormX, wormY)) {
+            openMarketWindow();
+        }
+    }
+
+    // Маркет и пятнашки — только визуальная пауза!
+    private void openMarketWindow() {
+        if (getDesktopPane() != null && !marketOpen) {
+            setPaused(true);
+            timerRedraw.stop();
+            timerModel.stop();
+
+            FarmMarketPanel marketPanel = new FarmMarketPanel(farmController, statsManager, gameSessionManager);
+            marketPanel.setCustomCloseHandler(frame -> {
+                setPaused(false);
+                timerRedraw.start();
+                timerModel.start();
+                marketOpen = false;
+                lastMarketCloseTime = System.currentTimeMillis();
+                return true;
+            });
+
+            // --- Вот сюда добавь обработчик ---
+            marketPanel.addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentMoved(ComponentEvent e) {
+                    repaint();
+                }
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    repaint();
+                }
+            });
+
+            getDesktopPane().add(marketPanel);
+            marketPanel.setVisible(true);
+
+            // --- Сразу после показа форсируем repaint карты ---
+            repaint();
+
+            marketPanel.setLocation(50, 10);
+            marketOpen = true;
+            try { marketPanel.setSelected(true); } catch (Exception ignored) {}
+        }
     }
 }

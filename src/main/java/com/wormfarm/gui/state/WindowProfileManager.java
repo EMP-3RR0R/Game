@@ -4,11 +4,13 @@ import com.wormfarm.gui.base.WindowStateManager;
 import com.wormfarm.gui.base.BaseInternalFrame;
 import com.wormfarm.gui.base.InternalFrameState;
 import com.wormfarm.core.model.WormState;
+import com.wormfarm.core.model.FarmSaveData;
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.core.logic.WormSaveManager;
 import com.wormfarm.core.model.WormStats;
 import com.wormfarm.settings.UserSettings;
 import com.wormfarm.settings.AppLocale;
+import com.wormfarm.farm.FarmController;
 
 import javax.swing.*;
 import java.io.*;
@@ -40,13 +42,11 @@ public class WindowProfileManager {
 
     public void saveWindowsProfile() {
         try {
-            // Сначала сохраняем состояние окон, потом appState!
             windowStateManager.captureStates(desktopPane);
 
             Path dir = Paths.get(PROFILES_DIR);
             if (!Files.exists(dir)) Files.createDirectories(dir);
 
-            // Сдвиг старых профилей
             for (int i = MAX_PROFILES - 1; i >= 1; i--) {
                 Path prev = dir.resolve("profile" + i + ".state.bin");
                 Path next = dir.resolve("profile" + (i + 1) + ".state.bin");
@@ -71,7 +71,6 @@ public class WindowProfileManager {
 
             FullProfile profile = new FullProfile();
             profile.mainWindow = mainWinState;
-            // Убираем дубли по ключу:
             Map<String, InternalFrameState> uniqueFrames = new LinkedHashMap<>();
             for (InternalFrameState state : windowStateManager.getFrameStates()) {
                 uniqueFrames.put(state.windowKey, state);
@@ -83,7 +82,6 @@ public class WindowProfileManager {
                 out.writeObject(profile);
             }
 
-            // Только после captureStates!
             gameSessionManager.saveAppState();
 
             if (gameSessionManager.isGameMapActive()) {
@@ -94,11 +92,15 @@ public class WindowProfileManager {
                 WormStatsManager statsManager = gameSessionManager.getStatsManager();
                 int targetX = gameSessionManager.getTargetX();
                 int targetY = gameSessionManager.getTargetY();
+                FarmSaveData farmSaveData = gameSessionManager.getFarmController() != null
+                        ? gameSessionManager.getFarmController().toSaveData()
+                        : new FarmSaveData(new ArrayList<>(), new ArrayList<>());
                 WormSaveManager.saveToAbsolutePath(
                         worm,
                         statsManager.getStats(),
                         targetX,
                         targetY,
+                        farmSaveData,
                         autoSaveFile.getAbsolutePath()
                 );
                 System.out.println("Автосейв профиля сохранён в " + autoSaveFile.getAbsolutePath());
@@ -123,7 +125,6 @@ public class WindowProfileManager {
                 return;
             }
 
-            // Удаляем все старые окна
             for (JInternalFrame oldFrame : desktopPane.getAllFrames()) {
                 if (oldFrame instanceof BaseInternalFrame) {
                     ((BaseInternalFrame) oldFrame).closeWithoutConfirmation();
@@ -140,7 +141,6 @@ public class WindowProfileManager {
             gameSessionManager.shutdownCurrentMapPanel();
             desktopPane.repaint();
 
-            // Загружаем профиль
             FullProfile restoredProfile;
             try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))) {
                 Object obj = in.readObject();
@@ -148,7 +148,6 @@ public class WindowProfileManager {
                 restoredProfile = (FullProfile)obj;
             }
 
-            // Восстанавливаем главное окно
             if (restoredProfile.mainWindow != null) {
                 int newX = restoredProfile.mainWindow.x;
                 int newY = restoredProfile.mainWindow.y;
@@ -171,8 +170,8 @@ public class WindowProfileManager {
                 frame.setExtendedState(frameState);
             }
 
-            // Восстанавливаем автосейв если есть
             final int[] loadedTarget = new int[2];
+            final FarmSaveData[] loadedFarm = new FarmSaveData[1];
             if (Files.exists(autoSavePath)) {
                 WormState worm = new WormState(100, 100, 0);
                 WormStats stats = new WormStats(0);
@@ -181,10 +180,10 @@ public class WindowProfileManager {
                         worm,
                         stats,
                         (x, y) -> { loadedTarget[0] = x; loadedTarget[1] = y; },
+                        (farmSave, found) -> { loadedFarm[0] = farmSave; },
                         autoSavePath.toAbsolutePath().toString()
                 );
-                // --- СНАЧАЛА восстанавливаем карту, панели и т.д. ---
-                gameSessionManager.setGameState(worm, statsManager);
+                gameSessionManager.setGameStateWithFarm(worm, statsManager, loadedFarm[0]);
                 loadedAutoSave = true;
                 System.out.println("Загружен автосейв профиля: " + autoSavePath.toAbsolutePath());
             } else {
@@ -197,7 +196,6 @@ public class WindowProfileManager {
             int targetY = loadedTarget[1];
             UserSettings settings = gameSessionManager.getSettings();
 
-            // --- ТЕПЕРЬ восстанавливаем внутренние окна! ---
             windowStateManager.getFrameStates().clear();
             if (restoredProfile.frames != null) {
                 Map<String, InternalFrameState> uniqueFrames = new LinkedHashMap<>();
@@ -228,6 +226,16 @@ public class WindowProfileManager {
                     case "minigame.fifteen.puzzle":
                         System.out.println("Восстанавливаем окно: minigame.fifteen.puzzle");
                         return new com.wormfarm.minigames.fifteenpuzzle.ui.swing.FifteenPuzzleFrame(gameSessionManager);
+                    case "farm.market":
+                        System.out.println("Восстанавливаем окно: farm.market");
+                        FarmController farmController = gameSessionManager.getFarmController();
+                        WormStatsManager farmStatsManager = statsManager;
+                        if (farmController != null && farmStatsManager != null) {
+                            return new com.wormfarm.farm.market.FarmMarketPanel(farmController, farmStatsManager, gameSessionManager);
+                        } else {
+                            System.out.println("Невозможно восстановить окно farm.market: нет контроллера или statsManager");
+                            return null;
+                        }
                     default:
                         return null;
                 }
@@ -235,19 +243,29 @@ public class WindowProfileManager {
 
             if (gameSessionManager.getCurrentMapPanel() != null) {
                 gameSessionManager.getCurrentMapPanel().setTarget(targetX, targetY);
+                gameSessionManager.getCurrentMapPanel().suppressMarketOnRestoreOnce();
             }
 
             boolean hasPause = restoredWindowKeys.contains("pause.menu");
             boolean hasFifteen = restoredWindowKeys.contains("minigame.fifteen.puzzle");
+            boolean hasMarket = restoredWindowKeys.contains("farm.market");
             System.out.println("Восстановленные окна: " + restoredWindowKeys);
 
-            if (hasPause || hasFifteen) {
+            if (hasPause || hasFifteen || hasMarket) {
                 gameSessionManager.pauseGameIfPossible();
             } else {
                 if (gameSessionManager.getCurrentMapPanel() != null) {
                     gameSessionManager.getCurrentMapPanel().resumeGame();
                 }
             }
+
+            // Подсчёт окон для suppression-логики
+            Set<String> resumableKeys = new HashSet<>(Arrays.asList("pause.menu", "minigame.fifteen.puzzle", "farm.market"));
+            int restoredResumableCount = 0;
+            for (String key : restoredWindowKeys) {
+                if (resumableKeys.contains(key)) restoredResumableCount++;
+            }
+            gameSessionManager.setRestoredResumableWindows(restoredResumableCount);
 
             System.out.println("Профиль окон #" + profileNumber + " восстановлен (главное окно + внутренние окна)." +
                     (loadedAutoSave ? " (автосейв подгружен)" : ""));

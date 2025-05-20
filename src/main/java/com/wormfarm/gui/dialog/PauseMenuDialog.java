@@ -102,13 +102,21 @@ public class PauseMenuDialog extends BaseInternalFrame {
             String saveName = dlg.getSelectedName();
             if (saveName != null) {
                 try {
-                    WormSaveManager.load(
-                            worm,
-                            statsManager.getStats(),
-                            (x, y) -> {},
-                            saveName
-                    );
-                    JOptionPane.showMessageDialog(parentComponent, "Игра '" + saveName + "' загружена!");
+                    // --- ЗАГРУЗКА ЧЕРЕЗ МЕНЕДЖЕР ---
+                    if (gameSessionManager != null) {
+                        gameSessionManager.loadSpecificGame(saveName);
+                        JOptionPane.showMessageDialog(parentComponent, "Игра '" + saveName + "' загружена!");
+                    } else {
+                        // Fallback: только червяк, если нет менеджера (маловероятно)
+                        WormSaveManager.load(
+                                worm,
+                                statsManager.getStats(),
+                                (x, y) -> {},
+                                (farmSave, found) -> {},
+                                saveName
+                        );
+                        JOptionPane.showMessageDialog(parentComponent, "Игра '" + saveName + "' загружена (только червяк)!");
+                    }
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(parentComponent, "Ошибка загрузки: " + ex.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
                 }
@@ -128,14 +136,22 @@ public class PauseMenuDialog extends BaseInternalFrame {
             String saveName = dlg.getSelectedName();
             if (saveName != null) {
                 try {
-                    WormSaveManager.save(
-                            worm,
-                            statsManager.getStats(),
-                            targetX,
-                            targetY,
-                            saveName
-                    );
-                    JOptionPane.showMessageDialog(parentComponent, "Игра сохранена как '" + saveName + "'!");
+                    // --- СОХРАНЕНИЕ ЧЕРЕЗ МЕНЕДЖЕР ---
+                    if (gameSessionManager != null) {
+                        gameSessionManager.saveCurrentGame(saveName);
+                        JOptionPane.showMessageDialog(parentComponent, "Игра сохранена как '" + saveName + "'!");
+                    } else {
+                        // Fallback: только червяк, если нет менеджера (маловероятно)
+                        WormSaveManager.save(
+                                worm,
+                                statsManager.getStats(),
+                                targetX,
+                                targetY,
+                                null,
+                                saveName
+                        );
+                        JOptionPane.showMessageDialog(parentComponent, "Игра сохранена как '" + saveName + "' (только червяк)!");
+                    }
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(parentComponent, "Ошибка сохранения: " + ex.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
                 }

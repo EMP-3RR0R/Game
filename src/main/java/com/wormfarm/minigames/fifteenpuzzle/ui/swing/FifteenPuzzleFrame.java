@@ -7,6 +7,7 @@ import com.wormfarm.core.model.WormStats;
 import com.wormfarm.settings.AppLocale;
 import com.wormfarm.settings.UserSettings;
 import com.wormfarm.gui.state.GameSessionManager;
+import com.wormfarm.gui.panel.WormMapPanel;
 
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
@@ -14,6 +15,8 @@ import javax.swing.event.InternalFrameEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
@@ -112,21 +115,42 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
             startGame();
         }
 
-        addInternalFrameListener(new javax.swing.event.InternalFrameAdapter() {
+        addInternalFrameListener(new InternalFrameAdapter() {
             @Override
-            public void internalFrameClosed(javax.swing.event.InternalFrameEvent e) {
+            public void internalFrameClosed(InternalFrameEvent e) {
                 visualizer.clearSprites();
                 if (gameSessionManager != null) {
                     gameSessionManager.onResumableWindowClosed();
+                    // --- repaint карты после закрытия окна ---
+                    WormMapPanel mapPanel = gameSessionManager.getCurrentMapPanel();
+                    if (mapPanel != null) mapPanel.repaint();
                 }
             }
             @Override
-            public void internalFrameIconified(javax.swing.event.InternalFrameEvent e) {
+            public void internalFrameIconified(InternalFrameEvent e) {
                 visualizer.repaint();
             }
             @Override
-            public void internalFrameDeiconified(javax.swing.event.InternalFrameEvent e) {
+            public void internalFrameDeiconified(InternalFrameEvent e) {
                 visualizer.repaint();
+            }
+        });
+
+        // --- repaint карты при перемещении/ресайзе окна мини-игры ---
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentMoved(ComponentEvent e) {
+                if (gameSessionManager != null) {
+                    WormMapPanel mapPanel = gameSessionManager.getCurrentMapPanel();
+                    if (mapPanel != null) mapPanel.repaint();
+                }
+            }
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (gameSessionManager != null) {
+                    WormMapPanel mapPanel = gameSessionManager.getCurrentMapPanel();
+                    if (mapPanel != null) mapPanel.repaint();
+                }
             }
         });
     }
