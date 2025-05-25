@@ -18,12 +18,12 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class PauseMenuDialog extends BaseInternalFrame {
-    private JButton btnResume;
-    private JButton btnLoad;
-    private JButton btnSave;
-    private JButton btnSettings;
-    private JButton btnExitToMenu;
-    private JButton btnExitToDesktop;
+    JButton btnResume;
+    JButton btnLoad;
+    JButton btnSave;
+    JButton btnSettings;
+    JButton btnExitToMenu;
+    JButton btnExitToDesktop;
 
     private final Runnable onResumeCallback;
     private final Runnable onExitToMenuCallback;

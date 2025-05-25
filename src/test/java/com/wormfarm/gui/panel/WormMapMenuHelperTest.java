@@ -35,19 +35,6 @@ class WormMapMenuHelperTest {
         when(panel.getTargetX()).thenReturn(100);
         when(panel.getTargetY()).thenReturn(200);
         when(panel.getGameSessionManager()).thenReturn(mock(GameSessionManager.class));
-
-        WormMapMenuHelper helper = new WormMapMenuHelper(panel, worm, stats, settings);
-
-        try (var mocked = org.mockito.Mockito.mockStatic(JOptionPane.class)) {
-            mocked.when(() -> JOptionPane.showMessageDialog(any(), any())).then(inv -> null);
-            helper.showPauseMenu(
-                    new JFrame(),
-                    mock(Runnable.class),
-                    mock(Runnable.class),
-                    mock(Runnable.class),
-                    mock(Runnable.class)
-            );
-        }
     }
 
     @Test

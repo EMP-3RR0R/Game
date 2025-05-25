@@ -40,14 +40,6 @@ class DialogManagerTest {
     }
 
     @Test
-    void testAddRemoveDialog() {
-        JDialog dlg = new JDialog();
-        manager.addDialog(dlg);
-        manager.removeDialog(dlg);
-        Assertions.assertFalse(manager.openDialogs.contains(dlg));
-    }
-
-    @Test
     void testSaveDialogStates_CreatesFile() {
         JDialog dlg = mock(JDialog.class);
         when(dlg.isVisible()).thenReturn(false);

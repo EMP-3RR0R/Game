@@ -11,10 +11,10 @@ import java.util.ResourceBundle;
  * Диалог выбора сохранения с поддержкой сериализации состояния.
  */
 public class LoadGameDialog extends JDialog {
-    private String selectedName = null;
+    String selectedName = null;
     private final ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
-    private JList<String> savesList;
-    private DefaultListModel<String> model;
+    JList<String> savesList;
+    DefaultListModel<String> model;
 
     public LoadGameDialog(JFrame owner, List<String> names) {
         super(owner, ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale()).getString("load.dialog.title"), true);

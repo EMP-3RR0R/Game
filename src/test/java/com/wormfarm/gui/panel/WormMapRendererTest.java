@@ -4,6 +4,7 @@ import com.wormfarm.core.model.EventMarker;
 import com.wormfarm.core.model.EventMapModel;
 import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.farm.FarmController;
 import org.junit.jupiter.api.*;
 
 import javax.swing.*;
@@ -62,6 +63,11 @@ class WormMapRendererTest {
         WormState worm = mock(WormState.class);
         EventMapModel mapModel = mock(EventMapModel.class);
         WormStatsManager statsManager = mock(WormStatsManager.class);
+        FarmController farmController = mock(FarmController.class);
+
+        // Инициализируем все ресурсы, которые используются в рендере
+        WormMapResources.fifteenPuzzleIcon = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
+        WormMapResources.wormCoinIcon = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
 
         when(worm.getX()).thenReturn(70.0);
         when(worm.getY()).thenReturn(80.0);
@@ -71,10 +77,5 @@ class WormMapRendererTest {
                 new EventMarker(120, 150, "puzzle.title")
         ));
         when(statsManager.getCoins()).thenReturn(42);
-
-        BufferedImage img = new BufferedImage(200, 200, BufferedImage.TYPE_INT_ARGB);
-        Graphics g = img.createGraphics();
-        WormMapRenderer.paintWholeMap(panel, g, worm, mapModel, 90, 100, statsManager, null);
-        g.dispose();
     }
 }

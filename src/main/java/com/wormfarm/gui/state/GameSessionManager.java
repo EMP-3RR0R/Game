@@ -129,6 +129,11 @@ public class GameSessionManager {
         WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
         CompostSource compostSource = new CompostSource(600, 600, 30);
+
+        // --- Корректно останавливаем старый FarmController ---
+        if (farmController != null) {
+            farmController.shutdown();
+        }
         farmController = new FarmController(compostSource, statsManager);
 
         farmController.setGlobalPaused(false);
@@ -210,6 +215,11 @@ public class GameSessionManager {
             WormStatsManager statsManager = new WormStatsManager(currentWormStats);
 
             CompostSource compostSource = new CompostSource(600, 600, 30);
+
+            // --- Корректно останавливаем старый FarmController ---
+            if (farmController != null) {
+                farmController.shutdown();
+            }
             farmController = new FarmController(compostSource, statsManager);
 
             WormSaveManager.load(
@@ -275,6 +285,11 @@ public class GameSessionManager {
         this.currentEventMap = new EventMapModel();
 
         CompostSource compostSource = new CompostSource(600, 600, 30);
+
+        // --- Корректно останавливаем старый FarmController ---
+        if (this.farmController != null) {
+            this.farmController.shutdown();
+        }
         this.farmController = new FarmController(compostSource, statsManager);
         if (farmSave != null) {
             this.farmController.restoreFromSave(farmSave);

@@ -92,7 +92,7 @@ public class DungBeetle extends FarmInsect {
         }
     }
 
-    private void moveToTarget(int curSpeed) {
+    void moveToTarget(int curSpeed) {
         if (x == targetX && y == targetY) return;
         int dx = targetX - x;
         int dy = targetY - y;

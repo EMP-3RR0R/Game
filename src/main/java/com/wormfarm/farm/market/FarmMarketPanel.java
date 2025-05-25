@@ -210,7 +210,7 @@ public class FarmMarketPanel extends BaseInternalFrame {
         return cell;
     }
 
-    private boolean buyDungBeetle(JComponent panel) {
+    boolean buyDungBeetle(JComponent panel) {
         CompostSource compost = farmController.getCompostSource();
         DungBeetle beetle = new DungBeetle(compost.getX(), compost.getY(), compost, 2, 4, 50.0);
         farmController.addDungBeetle(beetle);
@@ -225,7 +225,7 @@ public class FarmMarketPanel extends BaseInternalFrame {
         return true;
     }
 
-    private boolean buyPlant(JComponent panel) {
+    boolean buyPlant(JComponent panel) {
         if (farmController.getPlantField().isFull()) {
             JOptionPane.showMessageDialog(this, messages.getString("market.plant.fieldfull"));
             return false;

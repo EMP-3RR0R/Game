@@ -2,6 +2,7 @@ package com.wormfarm.core.logic;
 
 import com.wormfarm.core.model.WormState;
 import com.wormfarm.core.model.WormStats;
+import com.wormfarm.core.model.FarmSaveData;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -39,7 +40,7 @@ class WormSaveManagerTest {
         String saveName = "testsave1";
 
         assertFalse(WormSaveManager.hasSave(saveName), "Save must not exist before saving");
-        WormSaveManager.save(state, stats, targetX, targetY, saveName);
+        WormSaveManager.save(state, stats, targetX, targetY, null, saveName); // null FarmSaveData
         assertTrue(WormSaveManager.hasSave(saveName), "Save must exist after saving");
     }
 
@@ -50,16 +51,19 @@ class WormSaveManagerTest {
         int targetX = 333;
         int targetY = 444;
         String saveName = "loadsave1";
-        WormSaveManager.save(originalState, originalStats, targetX, targetY, saveName);
+        WormSaveManager.save(originalState, originalStats, targetX, targetY, null, saveName); // null FarmSaveData
 
         WormState loadedState = new WormState(0, 0, 0);
         WormStats loadedStats = new WormStats(0);
         int[] loadedTarget = new int[2];
 
-        WormSaveManager.load(loadedState, loadedStats, (x, y) -> {
-            loadedTarget[0] = x;
-            loadedTarget[1] = y;
-        }, saveName);
+        WormSaveManager.load(loadedState, loadedStats,
+                (x, y) -> {
+                    loadedTarget[0] = x;
+                    loadedTarget[1] = y;
+                },
+                (farmSave, found) -> {}, // no-op farm consumer
+                saveName);
 
         assertAll("Loaded state/coins/targets are correct",
                 () -> assertEquals(originalState.getX(), loadedState.getX(), 1e-9),
@@ -79,8 +83,8 @@ class WormSaveManagerTest {
 
         String save1 = "saveA";
         String save2 = "saveB";
-        WormSaveManager.save(state, stats, targetX, targetY, save1);
-        WormSaveManager.save(state, stats, targetX + 1, targetY + 1, save2);
+        WormSaveManager.save(state, stats, targetX, targetY, null, save1);
+        WormSaveManager.save(state, stats, targetX + 1, targetY + 1, null, save2);
 
         List<String> saves = WormSaveManager.listSaves();
         assertTrue(saves.contains(save1), "List must include save1");
@@ -94,7 +98,7 @@ class WormSaveManagerTest {
         WormStats stats = new WormStats(1);
         int targetX = 22, targetY = 33;
 
-        WormSaveManager.save(state, stats, targetX, targetY, saveName);
+        WormSaveManager.save(state, stats, targetX, targetY, null, saveName);
         assertTrue(WormSaveManager.hasSave(saveName), "File should exist after save");
 
         WormSaveManager.deleteSave(saveName);
@@ -107,7 +111,7 @@ class WormSaveManagerTest {
         WormStats stats = new WormStats(5);
         int targetX = 1, targetY = 2;
         assertThrows(IllegalArgumentException.class, () ->
-                        WormSaveManager.save(state, stats, targetX, targetY, "invalid/name?with*chars"),
+                        WormSaveManager.save(state, stats, targetX, targetY, null, "invalid/name?with*chars"),
                 "Invalid filename must throw exception"
         );
     }

@@ -118,7 +118,7 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
         addInternalFrameListener(new InternalFrameAdapter() {
             @Override
             public void internalFrameClosed(InternalFrameEvent e) {
-                visualizer.clearSprites();
+                // visualizer.clearSprites(); // Удалено! См. dispose()
                 if (gameSessionManager != null) {
                     gameSessionManager.onResumableWindowClosed();
                     // --- repaint карты после закрытия окна ---
@@ -191,7 +191,7 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     public void dispose() {
         uiTimer.stop();
         super.dispose();
-        visualizer.clearSprites();
+        visualizer.clearSprites(); // clearSprites теперь только тут!
     }
 
     @Override

@@ -36,6 +36,16 @@ public class FarmController {
         startHarvestTimer();
     }
 
+    // --- ДОБАВЛЕНО: корректное завершение таймеров ---
+    public void shutdown() {
+        try {
+            growthTimer.cancel();
+        } catch (Exception ignored) {}
+        try {
+            harvestTimer.cancel();
+        } catch (Exception ignored) {}
+    }
+
     // Только для полной паузы!
     public void setGlobalPaused(boolean paused) {
         System.out.println("[DEBUG] FarmController.setGlobalPaused: " + this.globalPaused + " -> " + paused);
