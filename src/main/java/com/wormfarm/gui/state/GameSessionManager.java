@@ -56,18 +56,10 @@ public class GameSessionManager {
         this.desktopPane = desktopPane;
     }
 
-    /**
-     * Сколько окон (маркет, пятнашки, пауза) восстановлено из профиля.
-     * Пока не закрыты все такие окна — автособытия запрещены. Когда закрыли последнее, suppression-флаг ставится на 5 секунд.
-     */
     public void setRestoredResumableWindows(int n) {
         this.restoredResumableWindows = n;
     }
 
-    /**
-     * Вызывать при закрытии каждого окна, требующего suppression (маркет, пятнашки, пауза).
-     * Только при закрытии последнего suppression-флаг ставится на 5 секунд.
-     */
     public void onResumableWindowClosed() {
         if (getCurrentMapPanel() != null) getCurrentMapPanel().resumeGame();
         if (restoredResumableWindows > 0) {
@@ -78,11 +70,6 @@ public class GameSessionManager {
         }
     }
 
-    /**
-     * Можно ли сейчас запускать игровые автособытия (открывать окна по таймерам/маркерам)?
-     * Пока есть открытые восстановленные окна — запрещено.
-     * После закрытия всех — suppression-флаг на 5 секунд.
-     */
     public boolean canActivateEvent() {
         if (restoredResumableWindows > 0) return false;
         return System.currentTimeMillis() >= suppressResumableWindowsUntil;
@@ -232,7 +219,7 @@ public class GameSessionManager {
                     },
                     (farmSave, found) -> {
                         if (farmSave != null) farmController.restoreFromSave(farmSave);
-                        else farmController.restoreFromSave(new FarmSaveData(new ArrayList<>(), new ArrayList<>()));
+                        else farmController.restoreFromSave(new FarmSaveData(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
                         farmController.setGlobalPaused(false);
                     },
                     saveName
@@ -268,7 +255,7 @@ public class GameSessionManager {
                     currentWormStats,
                     getTargetX(),
                     getTargetY(),
-                    farmController != null ? farmController.toSaveData() : new FarmSaveData(new ArrayList<>(), new ArrayList<>()),
+                    farmController != null ? farmController.toSaveData() : new FarmSaveData(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>()),
                     saveName
             );
             lastLoadedSaveName = saveName;
@@ -294,7 +281,7 @@ public class GameSessionManager {
         if (farmSave != null) {
             this.farmController.restoreFromSave(farmSave);
         } else {
-            this.farmController.restoreFromSave(new FarmSaveData(new ArrayList<>(), new ArrayList<>()));
+            this.farmController.restoreFromSave(new FarmSaveData(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
         }
         this.farmController.setGlobalPaused(false);
 

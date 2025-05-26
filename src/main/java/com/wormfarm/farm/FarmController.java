@@ -1,14 +1,16 @@
 package com.wormfarm.farm;
 
 import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.core.model.*;
 import com.wormfarm.farm.insect.DungBeetle;
+import com.wormfarm.farm.insect.Bee;
+import com.wormfarm.farm.insect.Ant;
 import com.wormfarm.farm.resource.CompostSource;
+import com.wormfarm.farm.resource.Beehive;
+import com.wormfarm.farm.resource.Anthill;
 import com.wormfarm.farm.plant.PlantField;
 import com.wormfarm.farm.market.MarketMarker;
 import com.wormfarm.farm.plant.PlantInstance;
-import com.wormfarm.core.model.FarmSaveData;
-import com.wormfarm.core.model.PlantData;
-import com.wormfarm.core.model.DungBeetleData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,26 +19,30 @@ import java.util.TimerTask;
 
 public class FarmController {
     private final List<DungBeetle> dungBeetles = new ArrayList<>();
+    private final List<Bee> bees = new ArrayList<>();
+    private final List<Ant> ants = new ArrayList<>();
     private final CompostSource compostSource;
+    private final Beehive beehive = new Beehive(100, 700, 30);
+    private final Anthill anthill = new Anthill(400, 700, 30);
     private final PlantField plantField = new PlantField();
     private final MarketMarker marketMarker = new MarketMarker(320, 100);
 
     private WormStatsManager statsManager;
 
-    // Таймеры для роста и автоурожая (НЕ зависят от paused карты/панели!)
     private final Timer growthTimer = new Timer("PlantGrowthTimer", true);
     private final Timer harvestTimer = new Timer("AutoHarvestTimer", true);
 
-    private volatile boolean globalPaused = false; // только для полной паузы!
+    private volatile boolean globalPaused = false;
 
     public FarmController(CompostSource compostSource, WormStatsManager statsManager) {
         this.compostSource = compostSource;
         this.statsManager = statsManager;
+        beehive.setFarmController(this);
+        anthill.setFarmController(this);
         startGrowthTimer();
         startHarvestTimer();
     }
 
-    // --- ДОБАВЛЕНО: корректное завершение таймеров ---
     public void shutdown() {
         try {
             growthTimer.cancel();
@@ -46,7 +52,6 @@ public class FarmController {
         } catch (Exception ignored) {}
     }
 
-    // Только для полной паузы!
     public void setGlobalPaused(boolean paused) {
         System.out.println("[DEBUG] FarmController.setGlobalPaused: " + this.globalPaused + " -> " + paused);
         this.globalPaused = paused;
@@ -68,12 +73,36 @@ public class FarmController {
         return compostSource;
     }
 
+    public Beehive getBeehive() {
+        return beehive;
+    }
+
+    public Anthill getAnthill() {
+        return anthill;
+    }
+
     public List<DungBeetle> getDungBeetles() {
         return dungBeetles;
     }
 
+    public List<Bee> getBees() {
+        return bees;
+    }
+
+    public List<Ant> getAnts() {
+        return ants;
+    }
+
     public void addDungBeetle(DungBeetle beetle) {
         dungBeetles.add(beetle);
+    }
+
+    public void addBee(Bee bee) {
+        bees.add(bee);
+    }
+
+    public void addAnt(Ant ant) {
+        ants.add(ant);
     }
 
     public PlantField getPlantField() {
@@ -84,18 +113,19 @@ public class FarmController {
         return marketMarker;
     }
 
-    /**
-     * Tick для движения объектов и анимаций (ставится на паузу при маркете/пятнашках/меню).
-     * Рост и ускорение — в growthTimer!
-     */
     public void tick() {
         if (globalPaused) return;
         for (DungBeetle beetle : dungBeetles) {
             beetle.tick();
         }
+        for (Bee bee : bees) {
+            bee.tick();
+        }
+        for (Ant ant : ants) {
+            ant.tick();
+        }
     }
 
-    // --- ОТДЕЛЬНЫЙ ТАЙМЕР ДЛЯ РОСТА И УСКОРЕНИЯ ---
     private void startGrowthTimer() {
         growthTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -109,10 +139,9 @@ public class FarmController {
                     }
                 }
             }
-        }, 33, 33); // ~30 раз в секунду
+        }, 33, 33);
     }
 
-    // --- АВТОУРЖАЙ (тоже не зависит от paused карты!) ---
     private void startHarvestTimer() {
         harvestTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -129,15 +158,13 @@ public class FarmController {
         long now = System.currentTimeMillis();
         for (PlantInstance plant : plantField.getPlants()) {
             if (plant.isReadyToHarvest(now)) {
-                statsManager.addCoins(1);
-                System.out.println("[DEBUG] FarmController.autoHarvestPlants: Plant " + plant.getX() + "," + plant.getY() + " harvested! addCoins(1)");
+                int price = (int)Math.round(1 * plant.getPriceMultiplier());
+                statsManager.addCoins(price);
+                System.out.println("[DEBUG] FarmController.autoHarvestPlants: Plant " + plant.getX() + "," + plant.getY() + " harvested! addCoins(" + price + ")");
                 plant.resetGrowth(now);
-                // assignedBeetle не сбрасываем!
             }
         }
     }
-
-    // --- Сериализация и восстановление ---
 
     public FarmSaveData toSaveData() {
         List<PlantData> plantDatas = new ArrayList<>();
@@ -166,7 +193,44 @@ public class FarmController {
                     b.isCarryingBall()
             ));
         }
-        return new FarmSaveData(plantDatas, beetleDatas);
+
+        List<BeeData> beeDatas = new ArrayList<>();
+        for (Bee b : bees) {
+            Integer plantIndex = null;
+            PlantInstance assigned = b.getTargetPlant();
+            if (assigned != null) {
+                plantIndex = plantField.getPlants().indexOf(assigned);
+            }
+            beeDatas.add(new BeeData(
+                    b.getX(),
+                    b.getY(),
+                    b.getBeeState().name(),
+                    plantIndex,
+                    b.isCarryingNectar(),
+                    b.getEllipseProgress(),
+                    b.getVisualDirectionRad()
+            ));
+        }
+
+        List<AntData> antDatas = new ArrayList<>();
+        for (Ant a : ants) {
+            Integer plantIndex = null;
+            PlantInstance assigned = a.getTargetPlant();
+            if (assigned != null) {
+                plantIndex = plantField.getPlants().indexOf(assigned);
+            }
+            antDatas.add(new AntData(
+                    a.getX(),
+                    a.getY(),
+                    a.getAntState().name(),
+                    plantIndex,
+                    a.isCarryingAphid(),
+                    a.getEllipseProgress(),
+                    a.getVisualDirectionRad()
+            ));
+        }
+
+        return new FarmSaveData(plantDatas, beetleDatas, beeDatas, antDatas);
     }
 
     public void restoreFromSave(FarmSaveData saveData) {
@@ -201,6 +265,66 @@ public class FarmController {
 
             dungBeetles.add(beetle);
             System.out.println("[DEBUG] restoreFromSave: Beetle x=" + bd.getX() + " y=" + bd.getY() + " state=" + bd.getBeetleState() + " plantIdx=" + bd.getAssignedPlantIndex() + " hasBall=" + bd.hasBall());
+        }
+        // Восстановление пчел
+        bees.clear();
+        for (BeeData bd : saveData.getBees()) {
+            Bee bee = new Bee(bd.getX(), bd.getY(), beehive, 3);
+            bee.setBeeState(Bee.BeeState.valueOf(bd.getBeeState()));
+            bee.setHasNectar(bd.hasNectar());
+            bee.setEllipseProgress(bd.getEllipseProgress());
+            bee.setVisualDirectionRad(bd.getVisualDirectionRad());
+
+            PlantInstance assignedPlant = null;
+            if (bd.getAssignedPlantIndex() != null && bd.getAssignedPlantIndex() < plants.size()) {
+                assignedPlant = plants.get(bd.getAssignedPlantIndex());
+                bee.assignToPlant(assignedPlant);
+            }
+
+            // Восстанавливаем позицию в зависимости от состояния и прогресса движения
+            if (assignedPlant != null) {
+                switch (bee.getBeeState()) {
+                    case TO_PLANT -> {
+                        // Рассчитываем позицию на пути к растению
+                        bee.setX(bd.getX());
+                        bee.setY(bd.getY());
+                        bee.setTarget(assignedPlant.getX(), assignedPlant.getY());
+                    }
+                    case WITH_NECTAR_TO_HIVE -> {
+                        // Рассчитываем позицию на пути к улью
+                        bee.setX(bd.getX());
+                        bee.setY(bd.getY());
+                        bee.setTarget(beehive.getX(), beehive.getY());
+                    }
+                    case IDLE -> {
+                        // Оставляем на текущей позиции
+                        bee.setX(bd.getX());
+                        bee.setY(bd.getY());
+                    }
+                }
+            } else {
+                // Если растения нет, оставляем на сохраненной позиции
+                bee.setX(bd.getX());
+                bee.setY(bd.getY());
+            }
+
+            bees.add(bee);
+        }
+        ants.clear();
+        for (AntData ad : saveData.getAnts()) {
+            Ant ant = new Ant(ad.getX(), ad.getY(), anthill, 2);
+            ant.setX(ad.getX());
+            ant.setY(ad.getY());
+            ant.setAntState(Ant.AntState.valueOf(ad.getAntState()));
+            ant.setHasAphid(ad.hasAphid());
+            ant.setEllipseProgress(ad.getEllipseProgress());
+            ant.setVisualDirectionRad(ad.getVisualDirectionRad());
+            PlantInstance assignedPlant = null;
+            if (ad.getAssignedPlantIndex() != null && ad.getAssignedPlantIndex() < plants.size()) {
+                assignedPlant = plants.get(ad.getAssignedPlantIndex());
+                ant.setTargetPlant(assignedPlant);
+            }
+            ants.add(ant);
         }
     }
 }

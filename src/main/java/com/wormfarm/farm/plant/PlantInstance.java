@@ -2,7 +2,7 @@ package com.wormfarm.farm.plant;
 
 import com.wormfarm.farm.insect.DungBeetle;
 
-public class PlantInstance {
+public class PlantInstance implements PriceUpgradable {
     private final int x;
     private final int y;
     private long plantedAtMillis;
@@ -12,6 +12,12 @@ public class PlantInstance {
 
     // Для корректной работы глобальной паузы
     private long pauseStartedAt = 0;
+
+    // Для поддержки апгрейда цены и скорости роста (пчёлы, муравьи)
+    private double priceMultiplier = 1.0;
+    private double growthSpeedMultiplier = 1.0;
+
+    private double beetleGrowthMultiplier = 1.0; // Сохраняем multiplier от навозника
 
     public PlantInstance(int x, int y, long plantedAtMillis) {
         this.x = x;
@@ -26,6 +32,9 @@ public class PlantInstance {
     public void setAssignedBeetle(DungBeetle beetle) {
         if (this.assignedBeetle == null) {
             this.assignedBeetle = beetle;
+            if (beetle != null) {
+                beetleGrowthMultiplier = beetle.getGrowthMultiplier();
+            }
             System.out.println("[DEBUG] PlantInstance.setAssignedBeetle: x=" + x + " y=" + y + " beetle=" + beetle);
         }
     }
@@ -38,12 +47,16 @@ public class PlantInstance {
         if (this.paused != paused) {
             System.out.println("[DEBUG] PlantInstance.setPaused: x=" + x + " y=" + y + " from " + this.paused + " to " + paused + " at " + currentTimeMillis);
             if (paused) {
-                growthAccumulatedMillis += currentTimeMillis - plantedAtMillis;
+                growthAccumulatedMillis += getUnpausedDelta(currentTimeMillis);
             } else {
                 plantedAtMillis = currentTimeMillis;
             }
             this.paused = paused;
         }
+    }
+
+    private long getUnpausedDelta(long currentTimeMillis) {
+        return currentTimeMillis - plantedAtMillis;
     }
 
     public boolean isPaused() {
@@ -55,7 +68,7 @@ public class PlantInstance {
         if (paused) {
             if (!this.paused) {
                 // Уходим на паузу: накапливаем всё текущее время
-                growthAccumulatedMillis += currentTimeMillis - plantedAtMillis;
+                growthAccumulatedMillis += getUnpausedDelta(currentTimeMillis);
                 pauseStartedAt = currentTimeMillis;
                 this.paused = true;
                 System.out.println("[DEBUG] PlantInstance.setGlobalPaused: PAUSE x=" + x + " y=" + y + " accum=" + growthAccumulatedMillis + " at=" + currentTimeMillis);
@@ -85,24 +98,56 @@ public class PlantInstance {
         growthAccumulatedMillis = 0;
     }
 
+    /// ВАЖНО: тут теперь применяется общий множитель ускорения!
     public long getGrowthMillis(long currentTimeMillis) {
         long total = growthAccumulatedMillis;
         if (!paused) {
-            total += currentTimeMillis - plantedAtMillis;
+            total += getUnpausedDelta(currentTimeMillis);
         }
-        System.out.println("[DEBUG] PlantInstance.getGrowthMillis: x=" + x + " y=" + y + " total=" + total + " paused=" + paused);
-        return total;
+        double multiplier = getTotalGrowthMultiplier();
+        long adjusted = (long) (total * multiplier);
+        System.out.println("[DEBUG] PlantInstance.getGrowthMillis: x=" + x + " y=" + y + " total=" + total + " adj=" + adjusted + " paused=" + paused + " multiplier=" + multiplier);
+        return adjusted;
     }
 
+    // Ускорение: множитель навозника * множитель муравья/пчелы (growthSpeedMultiplier)
+    public double getTotalGrowthMultiplier() {
+        double m = 1.0;
+        if (assignedBeetle != null) {
+            m *= beetleGrowthMultiplier;
+        }
+        m *= growthSpeedMultiplier;
+        return m;
+    }
+
+    // boostGrowth теперь НЕ нужен, но можно оставить для совместимости
     public void boostGrowth(double multiplier) {
-        if (multiplier <= 1.0) return;
-        long bonus = (long) (multiplier * 10);
-        growthAccumulatedMillis += bonus;
-        System.out.println("[DEBUG] PlantInstance.boostGrowth: x=" + x + " y=" + y + " multiplier=" + multiplier + " bonus=" + bonus + " newAccumulated=" + growthAccumulatedMillis);
+        // Не нужен, ускорение реализовано через getGrowthMillis
     }
 
     public void setGrowthAccumulatedMillis(long ms) {
         this.growthAccumulatedMillis = ms;
         System.out.println("[DEBUG] PlantInstance.setGrowthAccumulatedMillis: x=" + x + " y=" + y + " ms=" + ms);
+    }
+
+    // --- PriceUpgradable реализация ---
+    @Override
+    public void setPriceMultiplier(double mul) {
+        this.priceMultiplier = mul;
+    }
+
+    @Override
+    public void setGrowthSpeedMultiplier(double mul) {
+        this.growthSpeedMultiplier = mul;
+    }
+
+    @Override
+    public double getPriceMultiplier() {
+        return priceMultiplier;
+    }
+
+    @Override
+    public double getGrowthSpeedMultiplier() {
+        return growthSpeedMultiplier;
     }
 }

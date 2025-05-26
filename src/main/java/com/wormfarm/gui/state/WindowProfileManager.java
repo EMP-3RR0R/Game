@@ -94,7 +94,7 @@ public class WindowProfileManager {
                 int targetY = gameSessionManager.getTargetY();
                 FarmSaveData farmSaveData = gameSessionManager.getFarmController() != null
                         ? gameSessionManager.getFarmController().toSaveData()
-                        : new FarmSaveData(new ArrayList<>(), new ArrayList<>());
+                        : new FarmSaveData(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
                 WormSaveManager.saveToAbsolutePath(
                         worm,
                         statsManager.getStats(),
@@ -259,7 +259,6 @@ public class WindowProfileManager {
                 }
             }
 
-            // Подсчёт окон для suppression-логики
             Set<String> resumableKeys = new HashSet<>(Arrays.asList("pause.menu", "minigame.fifteen.puzzle", "farm.market"));
             int restoredResumableCount = 0;
             for (String key : restoredWindowKeys) {

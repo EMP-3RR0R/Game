@@ -2,6 +2,8 @@ package com.wormfarm.farm.ui;
 
 import com.wormfarm.farm.FarmController;
 import com.wormfarm.farm.insect.DungBeetle;
+import com.wormfarm.farm.insect.Bee;
+import com.wormfarm.farm.insect.Ant;
 import com.wormfarm.farm.market.MarketMarker;
 
 import java.awt.*;
@@ -12,11 +14,27 @@ public class FarmObjectsRenderer {
         if (farm.getCompostSource() != null) {
             CompostSourceRenderer.drawCompostSource(g, farm.getCompostSource());
         }
+        // Улей
+        if (farm.getBeehive() != null) {
+            BeehiveRenderer.drawBeehive(g, farm.getBeehive());
+        }
+        // Муравейник
+        if (farm.getAnthill() != null) {
+            AnthillRenderer.drawAnthill(g, farm.getAnthill());
+        }
         // Растения
         PlantFieldRenderer.drawPlants(g, farm.getPlantField());
         // Жуки-навозники
         for (DungBeetle beetle : farm.getDungBeetles()) {
             DungBeetleRenderer.drawDungBeetle(g, beetle);
+        }
+        // Пчёлы
+        for (Bee bee : farm.getBees()) {
+            BeeRenderer.drawBee(g, bee);
+        }
+        // Муравьи
+        for (Ant ant : farm.getAnts()) {
+            AntRenderer.drawAnt(g, ant);
         }
         // Магазин
         MarketMarker market = farm.getMarketMarker();

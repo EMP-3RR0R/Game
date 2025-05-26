@@ -6,6 +6,8 @@ import com.wormfarm.core.model.EventMarker;
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.farm.FarmController;
 import com.wormfarm.farm.ui.FarmObjectsRenderer;
+import com.wormfarm.farm.ui.BeehiveRenderer;
+import com.wormfarm.farm.ui.AnthillRenderer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,7 +21,7 @@ public class WormMapRenderer {
             JPanel panel, Graphics g, WormState worm, EventMapModel mapModel,
             int targetX, int targetY, WormStatsManager statsManager,
             ResourceBundle messages,
-            FarmController farmController // <-- добавлен
+            FarmController farmController
     ) {
         Graphics2D g2d = (Graphics2D) g.create();
 
@@ -41,8 +43,19 @@ public class WormMapRenderer {
             }
         }
 
-        // ФЕРМА: растения, жуки, компост
+        // ФЕРМА: компост, улей, муравейник, растения, жуки, пчёлы, муравьи, магазин
         if (farmController != null) {
+            // CompostSource, Beehive, Anthill – рендерим явно
+            if (farmController.getCompostSource() != null) {
+                com.wormfarm.farm.ui.CompostSourceRenderer.drawCompostSource(g2d, farmController.getCompostSource());
+            }
+            if (farmController.getBeehive() != null) {
+                BeehiveRenderer.drawBeehive(g2d, farmController.getBeehive());
+            }
+            if (farmController.getAnthill() != null) {
+                AnthillRenderer.drawAnthill(g2d, farmController.getAnthill());
+            }
+            // Остальные объекты (растения, жуки, пчёлы, муравьи, магазин)
             FarmObjectsRenderer.drawFarmObjects(g2d, farmController);
         }
 

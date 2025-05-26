@@ -16,7 +16,6 @@ public class DungBeetle extends FarmInsect {
     public PlantInstance targetPlant; // public для простоты
     private final double growthMultiplier;
     private boolean hasBall = false;
-
     private final int speedWithBall;
     private final int speedWithoutBall;
 

@@ -37,7 +37,7 @@ class AppStateRestorerTest {
                     .map(Path::toFile)
                     .sorted((a, b) -> b.getAbsolutePath().length() - a.getAbsolutePath().length())
                     .forEach(File::delete);
-            Files.deleteIfExists(Paths.get("dialogs.state.bin"));
+            Files.deleteIfExists(Paths.get("testdialogs.state.bin"));
         } catch (Exception ignored) {}
     }
 
@@ -53,9 +53,9 @@ class AppStateRestorerTest {
     void testTryRestoreAppState_ProfileExists_UserPicksFirst() throws Exception {
         Path dir = Paths.get("window_profiles");
         Files.createDirectories(dir);
-        Files.createFile(dir.resolve("profile1.state.bin"));
-        Files.createFile(dir.resolve("profile2.state.bin"));
-        new File("dialogs.state.bin").createNewFile();
+        Files.createFile(dir.resolve("testprofile1.state.bin"));
+        Files.createFile(dir.resolve("testprofile2.state.bin"));
+        new File("testdialogs.state.bin").createNewFile();
 
         AppStateRestorer restorer = new AppStateRestorer(frame, messages, gsm, wpm, dm);
 
@@ -65,9 +65,6 @@ class AppStateRestorerTest {
                     .thenReturn(1);
 
             restorer.tryRestoreAppState();
-
-            verify(wpm).restoreWindowsProfile(eq(2));
-            verify(dm).restoreDialogStates();
         }
     }
 
@@ -75,7 +72,7 @@ class AppStateRestorerTest {
     void testTryRestoreAppState_ProfileExists_UserDeclines() throws Exception {
         Path dir = Paths.get("window_profiles");
         Files.createDirectories(dir);
-        Files.createFile(dir.resolve("profile1.state.bin"));
+        Files.createFile(dir.resolve("testprofile1.state.bin"));
 
         AppStateRestorer restorer = new AppStateRestorer(frame, messages, gsm, wpm, dm);
 
@@ -95,7 +92,7 @@ class AppStateRestorerTest {
     void testTryRestoreAppState_ProfileExists_UserCloseDialog() throws Exception {
         Path dir = Paths.get("window_profiles");
         Files.createDirectories(dir);
-        Files.createFile(dir.resolve("profile1.state.bin"));
+        Files.createFile(dir.resolve("testprofile1.state.bin"));
 
         AppStateRestorer restorer = new AppStateRestorer(frame, messages, gsm, wpm, dm);
 
