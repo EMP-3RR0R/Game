@@ -7,7 +7,7 @@ public class DungBeetleData implements Serializable {
     private final int x, y;
     private final String beetleState;
     private final Integer assignedPlantIndex;
-    private final boolean hasBall; // <-- обязательно!
+    private final boolean hasBall;
 
     public DungBeetleData(int x, int y, String beetleState, Integer assignedPlantIndex, boolean hasBall) {
         this.x = x;

@@ -79,7 +79,6 @@ public class SaveGameDialog extends JDialog {
         setLocation(state.x, state.y);
         setSize(state.width, state.height);
         setVisible(state.visible);
-        // selectedName = state.extra; // если нужно восстановить выбранное имя
     }
 
     public String getSelectedName() {

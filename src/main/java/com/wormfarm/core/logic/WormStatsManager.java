@@ -27,7 +27,6 @@ public class WormStatsManager {
         return stats.getWormCoins();
     }
 
-    // --- Геттер для сохранения ---
     public WormStats getStats() {
         return stats;
     }

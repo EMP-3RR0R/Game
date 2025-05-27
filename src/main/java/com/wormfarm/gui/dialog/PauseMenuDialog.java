@@ -102,12 +102,10 @@ public class PauseMenuDialog extends BaseInternalFrame {
             String saveName = dlg.getSelectedName();
             if (saveName != null) {
                 try {
-                    // --- ЗАГРУЗКА ЧЕРЕЗ МЕНЕДЖЕР ---
                     if (gameSessionManager != null) {
                         gameSessionManager.loadSpecificGame(saveName);
                         JOptionPane.showMessageDialog(parentComponent, "Игра '" + saveName + "' загружена!");
                     } else {
-                        // Fallback: только червяк, если нет менеджера (маловероятно)
                         WormSaveManager.load(
                                 worm,
                                 statsManager.getStats(),
@@ -136,12 +134,10 @@ public class PauseMenuDialog extends BaseInternalFrame {
             String saveName = dlg.getSelectedName();
             if (saveName != null) {
                 try {
-                    // --- СОХРАНЕНИЕ ЧЕРЕЗ МЕНЕДЖЕР ---
                     if (gameSessionManager != null) {
                         gameSessionManager.saveCurrentGame(saveName);
                         JOptionPane.showMessageDialog(parentComponent, "Игра сохранена как '" + saveName + "'!");
                     } else {
-                        // Fallback: только червяк, если нет менеджера (маловероятно)
                         WormSaveManager.save(
                                 worm,
                                 statsManager.getStats(),
@@ -214,7 +210,6 @@ public class PauseMenuDialog extends BaseInternalFrame {
             public void internalFrameClosed(javax.swing.event.InternalFrameEvent e) {
                 if (gameSessionManager != null) {
                     gameSessionManager.onResumableWindowClosed();
-                    // Гарантированный repaint всей карты после закрытия паузы (MODAL_LAYER)
                     WormMapPanel mapPanel = gameSessionManager.getCurrentMapPanel();
                     if (mapPanel != null) {
                         mapPanel.repaint();

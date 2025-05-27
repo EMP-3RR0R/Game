@@ -33,10 +33,8 @@ class DungBeetleTest {
     void testTickToCompostToWithBallToPlant() {
         PlantInstance plant = new PlantInstance(52, 52, System.currentTimeMillis());
         beetle.assignToPlant(plant);
-        // move towards compost
         beetle.tick();
         assertFalse(beetle.isCarryingBall());
-        // simulate arrival at compost
         beetle.x = compost.getX();
         beetle.y = compost.getY();
         beetle.tick();
@@ -50,12 +48,10 @@ class DungBeetleTest {
     void testTickWithBallToPlantArrivesAndReturns() {
         PlantInstance plant = new PlantInstance(20, 20, System.currentTimeMillis());
         beetle.assignToPlant(plant);
-
-        // simulate already with ball, going to plant
         beetle.setBeetleState(DungBeetle.BeetleState.WITH_BALL_TO_PLANT);
         beetle.setHasBall(true);
         beetle.targetPlant = plant;
-        beetle.setTarget(plant.getX(), plant.getY()); // ensure correct target
+        beetle.setTarget(plant.getX(), plant.getY());
         beetle.x = plant.getX();
         beetle.y = plant.getY();
         beetle.tick();

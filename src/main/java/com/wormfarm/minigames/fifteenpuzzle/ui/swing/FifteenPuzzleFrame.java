@@ -45,7 +45,6 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     public FifteenPuzzleFrame(WormStatsManager wormStatsManager, UserSettings settings, boolean restoreMode, GameSessionManager gameSessionManager) {
         super("puzzle.title", wormStatsManager);
 
-        // --- Always iconifiable/closable ---
         setIconifiable(true);
         setClosable(true);
 
@@ -118,10 +117,8 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
         addInternalFrameListener(new InternalFrameAdapter() {
             @Override
             public void internalFrameClosed(InternalFrameEvent e) {
-                // visualizer.clearSprites(); // Удалено! См. dispose()
                 if (gameSessionManager != null) {
                     gameSessionManager.onResumableWindowClosed();
-                    // --- repaint карты после закрытия окна ---
                     WormMapPanel mapPanel = gameSessionManager.getCurrentMapPanel();
                     if (mapPanel != null) mapPanel.repaint();
                 }
@@ -136,7 +133,6 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
             }
         });
 
-        // --- repaint карты при перемещении/ресайзе окна мини-игры ---
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentMoved(ComponentEvent e) {
@@ -191,7 +187,7 @@ public class FifteenPuzzleFrame extends BaseMiniGameFrame {
     public void dispose() {
         uiTimer.stop();
         super.dispose();
-        visualizer.clearSprites(); // clearSprites теперь только тут!
+        visualizer.clearSprites();
     }
 
     @Override

@@ -11,14 +11,14 @@ import java.util.ResourceBundle;
 public class MainMenuPanel extends JPanel {
 
     private JDialog settingsDialog;
-    private final Runnable onSettings; // <-- final
+    private final Runnable onSettings;
     private final UserSettings settings;
 
     public MainMenuPanel(
             Runnable onContinue,
             Runnable onNewGame,
             Runnable onLoadGame,
-            Runnable onSettings, // <-- сюда передаём mainFrame::updateLocale
+            Runnable onSettings,
             Runnable onExit,
             boolean hasSaves,
             UserSettings settings
@@ -71,12 +71,11 @@ public class MainMenuPanel extends JPanel {
             settingsDialog.toFront();
             return;
         }
-        // Важно: вызывать глобальный колбэк!
         settingsDialog = new SettingsDialog(
                 SwingUtilities.getWindowAncestor(this),
                 () -> {
-                    if (onSettings != null) onSettings.run(); // <-- теперь только это!
-                    updateTexts(); // Можно оставить, чтобы кнопки тоже обновились мгновенно
+                    if (onSettings != null) onSettings.run();
+                    updateTexts();
                 },
                 settings
         );

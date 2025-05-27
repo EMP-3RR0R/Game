@@ -19,10 +19,6 @@ import java.util.ArrayList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Тесты FarmMarketPanel.
- * В headless-режиме запускать с -Djava.awt.headless=true !
- */
 class FarmMarketPanelTest {
 
     FarmController farmController;
@@ -73,19 +69,14 @@ class FarmMarketPanelTest {
             PlantInstance plant = new PlantInstance(1, 2, System.currentTimeMillis());
             when(plantField.getPlants()).thenReturn(List.of(plant));
 
-            // Проверяем, что beetle назначается растению
             doAnswer(inv -> {
                 DungBeetle beetle = inv.getArgument(0);
                 assertNotNull(beetle);
-                // Проверяем, что plant.getAssignedBeetle() == beetle после вызова assignToPlant
-                // assignToPlant вызывается внутри buyDungBeetle
-                // Поэтому проверим это после buyDungBeetle ниже
                 return null;
             }).when(farmController).addDungBeetle(any(DungBeetle.class));
 
             boolean ok = panel.buyDungBeetle(null);
             assertTrue(ok);
-            // Проверяем, что plant действительно получил жука
             assertNotNull(plant.getAssignedBeetle());
         }
     }
@@ -119,7 +110,6 @@ class FarmMarketPanelTest {
             when(plantField.isFull()).thenReturn(true);
             boolean ok = panel.buyPlant(null);
             assertFalse(ok);
-            // Проверяем, что был вызван showMessageDialog с любым текстом (главное — был вызван)
             mockJOP.verify(() -> JOptionPane.showMessageDialog(any(), any()), atLeastOnce());
         }
     }

@@ -116,7 +116,7 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
             lastX = getEmptyX();
             lastY = getEmptyY();
         }
-        moveCount = 0; // не считаем ходы при перемешивании
+        moveCount = 0;
         startTimer();
         isShuffling = false;
     }
@@ -221,9 +221,6 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
         endTime = System.currentTimeMillis();
     }
 
-    /*public long getElapsedTimeMillis() {
-        return (endTime > 0 ? endTime : System.currentTimeMillis()) - startTime;
-    }*/
     public void resumeGame() {
         if (isPaused) {
             startTime = System.currentTimeMillis();
@@ -238,5 +235,4 @@ public class ClassicFifteenPuzzleLogic implements FifteenPuzzleGame {
             return elapsedTime + (System.currentTimeMillis() - startTime);
         }
     }
-
 }

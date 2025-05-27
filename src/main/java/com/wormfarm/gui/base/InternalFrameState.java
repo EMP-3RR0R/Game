@@ -11,8 +11,6 @@ public class InternalFrameState implements Serializable {
 
     public int normalX = -1, normalY = -1, normalWidth = -1, normalHeight = -1;
 
-    public InternalFrameState() {}
-
     public InternalFrameState(String windowKey) {
         this.windowKey = windowKey;
     }

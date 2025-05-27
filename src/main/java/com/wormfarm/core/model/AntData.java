@@ -28,4 +28,11 @@ public class AntData implements Serializable {
     public boolean hasAphid() { return hasAphid; }
     public double getEllipseProgress() { return ellipseProgress; }
     public double getVisualDirectionRad() { return visualDirectionRad; }
+
+    @Override
+    public String toString() {
+        return "AntData[x=" + x + ",y=" + y + ",state=" + antState +
+                ",plantIdx=" + assignedPlantIndex + ",aphid=" + hasAphid +
+                ",progress=" + ellipseProgress + ",dir=" + visualDirectionRad + "]";
+    }
 }

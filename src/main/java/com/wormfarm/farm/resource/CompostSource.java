@@ -1,7 +1,5 @@
 package com.wormfarm.farm.resource;
 
-import java.awt.*;
-
 public class CompostSource {
     private final int x;
     private final int y;

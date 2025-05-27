@@ -28,7 +28,6 @@ public class MainApplicationFrame extends JFrame {
     public final DialogManager dialogManager;
 
     public MainApplicationFrame() {
-        // --- Загрузка настроек пользователя ---
         try {
             File settingsFile = new File("user.settings");
             if (settingsFile.exists()) {
@@ -55,13 +54,11 @@ public class MainApplicationFrame extends JFrame {
         setTitle(messages.getString("app.title"));
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-        // --- Инициализация менеджеров ---
         this.gameSessionManager = new GameSessionManager(this, settings, messages, desktopPane);
         this.dialogManager = new DialogManager(this, messages, gameSessionManager, this::updateLocale);
         this.gameSessionManager.setDialogManager(dialogManager);
         this.windowProfileManager = new WindowProfileManager(this, desktopPane, gameSessionManager);
 
-        // ВАЖНО: пробрасываем главный колбэк смены локали
         this.gameSessionManager.setOnLocaleChange(this::updateLocale);
 
         addWindowListener(new WindowAdapter() {
@@ -112,13 +109,11 @@ public class MainApplicationFrame extends JFrame {
         revalidate();
         repaint();
 
-        // Обновить все внутренние окна
         for (JInternalFrame frame : desktopPane.getAllFrames()) {
             if (frame instanceof BaseInternalFrame bframe) {
                 bframe.updateLocale();
             }
         }
-        // Обновить все панели, если они поддерживают updateTexts/updateLocale
         for (Component comp : desktopPane.getComponents()) {
             if (comp instanceof JPanel panel) {
                 try {

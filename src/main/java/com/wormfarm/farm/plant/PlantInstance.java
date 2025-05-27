@@ -10,14 +10,12 @@ public class PlantInstance implements PriceUpgradable {
     private boolean paused = false;
     private DungBeetle assignedBeetle = null;
 
-    // Для корректной работы глобальной паузы
     private long pauseStartedAt = 0;
 
-    // Для поддержки апгрейда цены и скорости роста (пчёлы, муравьи)
     private double priceMultiplier = 1.0;
     private double growthSpeedMultiplier = 1.0;
 
-    private double beetleGrowthMultiplier = 1.0; // Сохраняем multiplier от навозника
+    private double beetleGrowthMultiplier = 1.0;
 
     public PlantInstance(int x, int y, long plantedAtMillis) {
         this.x = x;
@@ -63,11 +61,9 @@ public class PlantInstance implements PriceUpgradable {
         return paused;
     }
 
-    // Глобальная пауза (для всей фермы)
     public void setGlobalPaused(boolean paused, long currentTimeMillis) {
         if (paused) {
             if (!this.paused) {
-                // Уходим на паузу: накапливаем всё текущее время
                 growthAccumulatedMillis += getUnpausedDelta(currentTimeMillis);
                 pauseStartedAt = currentTimeMillis;
                 this.paused = true;
@@ -75,7 +71,6 @@ public class PlantInstance implements PriceUpgradable {
             }
         } else {
             if (this.paused) {
-                // Выходим с паузы: просто сдвигаем plantedAtMillis
                 plantedAtMillis = currentTimeMillis;
                 pauseStartedAt = 0;
                 this.paused = false;
@@ -84,7 +79,6 @@ public class PlantInstance implements PriceUpgradable {
         }
     }
 
-    // Проверка: растение созрело (по времени)
     public boolean isReadyToHarvest(long currentTimeMillis) {
         long total = getGrowthMillis(currentTimeMillis);
         boolean ready = total >= 10 * 1000;
@@ -98,7 +92,6 @@ public class PlantInstance implements PriceUpgradable {
         growthAccumulatedMillis = 0;
     }
 
-    /// ВАЖНО: тут теперь применяется общий множитель ускорения!
     public long getGrowthMillis(long currentTimeMillis) {
         long total = growthAccumulatedMillis;
         if (!paused) {
@@ -110,7 +103,6 @@ public class PlantInstance implements PriceUpgradable {
         return adjusted;
     }
 
-    // Ускорение: множитель навозника * множитель муравья/пчелы (growthSpeedMultiplier)
     public double getTotalGrowthMultiplier() {
         double m = 1.0;
         if (assignedBeetle != null) {
@@ -120,9 +112,7 @@ public class PlantInstance implements PriceUpgradable {
         return m;
     }
 
-    // boostGrowth теперь НЕ нужен, но можно оставить для совместимости
     public void boostGrowth(double multiplier) {
-        // Не нужен, ускорение реализовано через getGrowthMillis
     }
 
     public void setGrowthAccumulatedMillis(long ms) {
@@ -130,7 +120,6 @@ public class PlantInstance implements PriceUpgradable {
         System.out.println("[DEBUG] PlantInstance.setGrowthAccumulatedMillis: x=" + x + " y=" + y + " ms=" + ms);
     }
 
-    // --- PriceUpgradable реализация ---
     @Override
     public void setPriceMultiplier(double mul) {
         this.priceMultiplier = mul;

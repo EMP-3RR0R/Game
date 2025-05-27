@@ -37,7 +37,6 @@ class FifteenPuzzleControllerTest {
         statsManager = spy(new WormStatsManager(stats));
         mouseCaptor = ArgumentCaptor.forClass(MouseAdapter.class);
 
-        // Capture MouseAdapter instead of using getMouseListeners()
         doNothing().when(visualizer).addMouseListener(mouseCaptor.capture());
 
         controller = new FifteenPuzzleController(logic, visualizer, parent, statsManager, null);
@@ -218,7 +217,6 @@ class FifteenPuzzleControllerTest {
         doNothing().when(visualizer).addMouseListener(mouseCaptor.capture());
         FifteenPuzzleController ctrl = new FifteenPuzzleController(logic, visualizer, parent, statsManager, null);
 
-        // Найти PuzzleEventListener через рефлексию
         PuzzleEventListener listener = null;
         try {
             Field listenersField = ClassicFifteenPuzzleLogic.class.getDeclaredField("listeners");

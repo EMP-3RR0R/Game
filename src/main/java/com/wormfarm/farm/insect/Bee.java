@@ -55,18 +55,18 @@ public class Bee extends FarmInsect {
         switch (beeState) {
             case WITH_NECTAR_TO_HIVE-> {
                 if (targetPlant == null) break;
-                boolean arrived = moveEllipseTrajectory(beehive.getX(), beehive.getY(), targetPlant.getX(), targetPlant.getY());
+                boolean arrived = moveEllipseTrajectory(targetPlant.getX(), targetPlant.getY(), beehive.getX(), beehive.getY());
                 if (arrived) {
                     beeState = BeeState.TO_PLANT;
-                    hasNectar = false;
+                    hasNectar = true;
                     ellipseProgress = 0.0;
                 }
             }
             case TO_PLANT -> {
-                boolean arrived = moveEllipseTrajectory(targetPlant.getX(), targetPlant.getY(), beehive.getX(), beehive.getY());
+                boolean arrived = moveEllipseTrajectory(beehive.getX(), beehive.getY(), targetPlant.getX(), targetPlant.getY());
                 if (arrived) {
                     beeState = BeeState.WITH_NECTAR_TO_HIVE;
-                    hasNectar = true;
+                    hasNectar = false;
                     ellipseProgress = 0.0;
                 }
             }
@@ -77,7 +77,6 @@ public class Bee extends FarmInsect {
         }
     }
 
-    // Эллипс между from и to, прогресс ellipseProgress от 0 до 1
     private boolean moveEllipseTrajectory(int fromX, int fromY, int toX, int toY) {
         if (ellipseProgress >= 1.0) {
             x = toX;
@@ -125,7 +124,6 @@ public class Bee extends FarmInsect {
         return null;
     }
 
-    // --- Для восстановления состояния при загрузке ---
     public void setBeeState(BeeState beeState) { this.beeState = beeState; }
     public void setHasNectar(boolean hasNectar) { this.hasNectar = hasNectar; }
     public void setEllipseProgress(double progress) { this.ellipseProgress = progress; }
@@ -133,4 +131,10 @@ public class Bee extends FarmInsect {
     public void setTargetPlant(PlantInstance plant) { this.targetPlant = plant; }
     public void setX(int x) { this.x = x; }
     public void setY(int y) { this.y = y; }
+
+    @Override
+    public String toString() {
+        return "Bee[x=" + x + ",y=" + y + ",targetX=" + targetX + ",targetY=" + targetY + "]";
+    }
+
 }

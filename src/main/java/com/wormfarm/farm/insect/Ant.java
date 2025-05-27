@@ -16,7 +16,7 @@ public class Ant extends FarmInsect {
     private AntState antState = AntState.IDLE;
     private final Anthill anthill;
     private PlantInstance targetPlant;
-    private boolean hasAphid = false;
+    private boolean hasAphid = true;
 
     private double visualDirectionRad = 0.0;
     private double ellipseProgress = 1.0;
@@ -51,31 +51,35 @@ public class Ant extends FarmInsect {
     public void tick() {
         if (targetPlant == null || targetPlant.getGrowthSpeedMultiplier() != (1.0 / 1.5)) {
             PlantInstance plant = findFreePlant();
-            if (plant != null) assignToPlant(plant);
+            if (plant != null) {
+                assignToPlant(plant);
+                return;
+            }
         }
 
         switch (antState) {
-            case WITH_APHID_TO_ANTHILL -> {
-                if (targetPlant == null) break;
-                boolean arrived = moveEllipseTrajectory(anthill.getX(), anthill.getY(), targetPlant.getX(), targetPlant.getY());
-                if (arrived) {
-                    antState = AntState.TO_PLANT;
-                    hasAphid = true;
-                    ellipseProgress = 0.0;
-                }
-            }
-            case TO_PLANT -> {
-                boolean arrived = moveEllipseTrajectory(targetPlant.getX(), targetPlant.getY(), anthill.getX(), anthill.getY());
-                if (arrived) {
+            case TO_PLANT:
+                if (moveEllipseTrajectory(targetPlant.getX(), targetPlant.getY(),
+                        anthill.getX(), anthill.getY())) {
                     antState = AntState.WITH_APHID_TO_ANTHILL;
                     hasAphid = false;
                     ellipseProgress = 0.0;
                 }
-            }
-            case IDLE -> {
+                break;
+
+            case WITH_APHID_TO_ANTHILL:
+                if (moveEllipseTrajectory(anthill.getX(), anthill.getY(),
+                        targetPlant.getX(), targetPlant.getY())) {
+                    antState = AntState.TO_PLANT;
+                    hasAphid = true;
+                    ellipseProgress = 0.0;
+                }
+                break;
+
+            case IDLE:
                 PlantInstance plant = findFreePlant();
                 if (plant != null) assignToPlant(plant);
-            }
+                break;
         }
     }
 
@@ -86,34 +90,34 @@ public class Ant extends FarmInsect {
             visualDirectionRad = Math.atan2(toY - fromY, toX - fromX);
             return true;
         }
-        double prevX = x, prevY = y;
-        ellipseProgress += PROGRESS_SPEED * speed;
-        if (ellipseProgress > 1.0) ellipseProgress = 1.0;
 
-        double t = ellipseProgress;
+        double prevProgress = ellipseProgress;
+        ellipseProgress = Math.min(1.0, ellipseProgress + PROGRESS_SPEED * speed);
+
         double cx = (fromX + toX) / 2.0;
         double cy = (fromY + toY) / 2.0;
         double dx = toX - fromX;
         double dy = toY - fromY;
-        double len = Math.sqrt(dx * dx + dy * dy);
         double angle = Math.atan2(dy, dx);
-
-        double a = len / 2.0;
+        double a = Math.sqrt(dx * dx + dy * dy) / 2.0;
         double b = Math.max(24, a * 0.6);
 
-        double theta = Math.PI * t;
-
+        double theta = Math.PI * ellipseProgress;
         double ex = cx + a * Math.cos(theta) * Math.cos(angle) - b * Math.sin(theta) * Math.sin(angle);
         double ey = cy + a * Math.cos(theta) * Math.sin(angle) + b * Math.sin(theta) * Math.cos(angle);
 
+        int prevX = x, prevY = y;
         x = (int) Math.round(ex);
         y = (int) Math.round(ey);
+        visualDirectionRad = Math.atan2(y - prevY, x - prevX);
 
-        if (ellipseProgress < 1.0) {
-            visualDirectionRad = Math.atan2(y - prevY, x - prevX);
-        } else {
-            visualDirectionRad = angle;
-        }
+        System.out.printf(
+                "Ant MOVEMENT: Progress %.3f → %.3f | Pos [%d,%d] → [%d,%d] | State %s%n",
+                prevProgress, ellipseProgress,
+                prevX, prevY, x, y,
+                antState
+        );
+
         return ellipseProgress >= 1.0;
     }
 
@@ -126,7 +130,6 @@ public class Ant extends FarmInsect {
         return null;
     }
 
-    // --- Для восстановления состояния при загрузке ---
     public void setAntState(AntState antState) { this.antState = antState; }
     public void setHasAphid(boolean hasAphid) { this.hasAphid = hasAphid; }
     public void setEllipseProgress(double progress) { this.ellipseProgress = progress; }
@@ -134,4 +137,9 @@ public class Ant extends FarmInsect {
     public void setTargetPlant(PlantInstance plant) { this.targetPlant = plant; }
     public void setX(int x) { this.x = x; }
     public void setY(int y) { this.y = y; }
+
+    @Override
+    public String toString() {
+        return "Ant[x=" + x + ",y=" + y + ",targetX=" + targetX + ",targetY=" + targetY + "]";
+    }
 }

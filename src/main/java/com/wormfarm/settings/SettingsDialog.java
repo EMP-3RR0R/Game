@@ -30,7 +30,6 @@ public class SettingsDialog extends JDialog {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
 
-        // Язык
         JLabel labelLang = new JLabel(messages.getString("settings.language"));
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -44,7 +43,6 @@ public class SettingsDialog extends JDialog {
         gbc.anchor = GridBagConstraints.LINE_START;
         add(langCombo, gbc);
 
-        // Показываем текущий язык из настроек
         String currentLang = settings.getLanguage();
         int idx = 0;
         for (String code : langMap.values()) {
@@ -55,7 +53,6 @@ public class SettingsDialog extends JDialog {
             idx++;
         }
 
-        // Громкость
         JLabel labelVolume = new JLabel(messages.getString("settings.volume"));
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -72,7 +69,6 @@ public class SettingsDialog extends JDialog {
         gbc.anchor = GridBagConstraints.LINE_START;
         add(volumeSlider, gbc);
 
-        // Кнопки
         JPanel btnPanel = new JPanel();
         JButton btnSave = new JButton(messages.getString("settings.save"));
         JButton btnCancel = new JButton(messages.getString("settings.cancel"));
@@ -111,8 +107,6 @@ public class SettingsDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
-    // --- Сохранение состояния (DialogState) ---
-
     public String getDialogKey() {
         return "settings.dialog";
     }
@@ -124,7 +118,6 @@ public class SettingsDialog extends JDialog {
         state.width = getWidth();
         state.height = getHeight();
         state.visible = isVisible();
-        // Сохраняем выбранный язык и громкость через extra (например: "ru;75")
         String selectedLang = langMap.get((String) langCombo.getSelectedItem());
         int volume = volumeSlider.getValue();
         state.extra = selectedLang + ";" + volume;
@@ -135,7 +128,6 @@ public class SettingsDialog extends JDialog {
         setLocation(state.x, state.y);
         setSize(state.width, state.height);
         setVisible(state.visible);
-        // Восстановление выбранного языка и громкости, если extra не пуста
         if (state.extra != null) {
             String[] parts = state.extra.split(";");
             if (parts.length == 2) {

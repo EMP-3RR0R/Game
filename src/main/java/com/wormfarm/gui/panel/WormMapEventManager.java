@@ -5,6 +5,7 @@ import com.wormfarm.core.model.EventMarker;
 import com.wormfarm.core.model.EventMapModel;
 import com.wormfarm.core.logic.WormMover;
 import com.wormfarm.core.logic.WormStatsManager;
+import com.wormfarm.gui.base.BaseInternalFrame;
 import com.wormfarm.minigames.fifteenpuzzle.ui.swing.FifteenPuzzleFrame;
 import com.wormfarm.settings.AppLocale;
 
@@ -29,7 +30,7 @@ public class WormMapEventManager {
             EventMapModel mapModel,
             Set<EventMarker> activeMarkers,
             Map<EventMarker, Long> recentlyActivated,
-            ResourceBundle messages // оставлено для совместимости сигнатуры
+            ResourceBundle messages
     ) {
         this.panel = panel;
         this.worm = worm;
@@ -38,7 +39,6 @@ public class WormMapEventManager {
         this.recentlyActivated = recentlyActivated;
     }
 
-    // Utility ― всегда свежий ResourceBundle!
     protected ResourceBundle getMessages() {
         return ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
     }
@@ -57,7 +57,6 @@ public class WormMapEventManager {
                 if (!activeMarkers.contains(marker) &&
                         (!recentlyActivated.containsKey(marker) ||
                                 now - recentlyActivated.get(marker) > 5000)) {
-                    // --- ДОБАВЛЯЕМ ПРОВЕРКУ suppression-флага ---
                     if (panel.getGameSessionManager() == null || panel.getGameSessionManager().canActivateEvent()) {
                         activeMarkers.add(marker);
                         SwingUtilities.invokeLater(() -> panel.tryActivateEvent(marker));
@@ -78,67 +77,76 @@ public class WormMapEventManager {
         ResourceBundle messages = getMessages();
 
         if ("puzzle.title".equals(marker.getDescription())) {
-            panel.setPaused(true);
-            SwingUtilities.invokeLater(() -> {
-                JDesktopPane desktopPane = panel.getDesktopPane();
-                if (desktopPane == null) {
-                    JOptionPane.showMessageDialog(ownerFrame, messages.getString("error.no_desktop_pane"));
-                    if (onClose != null) onClose.run();
-                    return;
-                }
-
-                FifteenPuzzleFrame puzzleFrame = (statsManager != null)
-                        ? new FifteenPuzzleFrame(statsManager, null)
-                        : new FifteenPuzzleFrame();
-
-                puzzleFrame.setClosable(true);
-                puzzleFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-
-                puzzleFrame.setCustomCloseHandler(frame -> {
-                    int confirm = JOptionPane.showConfirmDialog(
-                            frame,
-                            messages.getString("puzzle.confirm.exit") + "\n" + messages.getString("puzzle.progress.lost"),
-                            messages.getString("puzzle.confirm.exit.title"),
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE
-                    );
-                    return confirm == JOptionPane.YES_OPTION;
-                });
-
-                puzzleFrame.addInternalFrameListener(new javax.swing.event.InternalFrameAdapter() {
-                    @Override
-                    public void internalFrameClosed(javax.swing.event.InternalFrameEvent e) {
-                        if (onClose != null) onClose.run();
-                    }
-                });
-
-                // repaint карты при перемещении/изменении размера окна пятнашек
-                puzzleFrame.addComponentListener(new ComponentAdapter() {
-                    @Override
-                    public void componentMoved(ComponentEvent e) {
-                        panel.repaint();
-                    }
-                    @Override
-                    public void componentResized(ComponentEvent e) {
-                        panel.repaint();
-                    }
-                });
-
-                desktopPane.add(puzzleFrame, JLayeredPane.MODAL_LAYER);
-                puzzleFrame.setVisible(true);
-                try {
-                    puzzleFrame.setSelected(true);
-                } catch (Exception ignored) {}
-
-                int x = (desktopPane.getWidth() - puzzleFrame.getWidth()) / 2;
-                int y = (desktopPane.getHeight() - puzzleFrame.getHeight()) / 2;
-                puzzleFrame.setLocation(Math.max(0, x), Math.max(0, y));
-            });
+            activateFifteenPuzzle(ownerFrame, statsManager, onClose);
         }
-        // Можно добавить обработку других событий, используя marker.getDescription()
     }
 
-    // Локализованный заголовок события для диалогов
+    private void activateFifteenPuzzle(JFrame ownerFrame, WormStatsManager statsManager, Runnable onClose) {
+        panel.setPaused(true);
+        SwingUtilities.invokeLater(() -> {
+            JDesktopPane desktopPane = panel.getDesktopPane();
+            if (desktopPane == null) {
+                JOptionPane.showMessageDialog(ownerFrame, getMessages().getString("error.no_desktop_pane"));
+                if (onClose != null) onClose.run();
+                return;
+            }
+
+            FifteenPuzzleFrame puzzleFrame = (statsManager != null)
+                    ? new FifteenPuzzleFrame(statsManager, null)
+                    : new FifteenPuzzleFrame();
+
+            setupGameFrame(puzzleFrame, desktopPane, onClose);
+        });
+    }
+
+    private void setupGameFrame(BaseInternalFrame frame, JDesktopPane desktopPane, Runnable onClose) {
+        frame.setClosable(true);
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+        frame.setCustomCloseHandler(f -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    f,
+                    getMessages().getString("puzzle.confirm.exit") + "\n" + getMessages().getString("puzzle.progress.lost"),
+                    getMessages().getString("puzzle.confirm.exit.title"),
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return confirm == JOptionPane.YES_OPTION;
+        });
+
+        frame.addInternalFrameListener(new javax.swing.event.InternalFrameAdapter() {
+            @Override
+            public void internalFrameClosed(javax.swing.event.InternalFrameEvent e) {
+                if (onClose != null) onClose.run();
+            }
+        });
+
+        frame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentMoved(ComponentEvent e) {
+                panel.repaint();
+            }
+            @Override
+            public void componentResized(ComponentEvent e) {
+                panel.repaint();
+            }
+        });
+
+        desktopPane.add(frame, JLayeredPane.MODAL_LAYER);
+        frame.setVisible(true);
+        try {
+            frame.setSelected(true);
+        } catch (Exception ignored) {}
+
+        centerFrame(frame, desktopPane);
+    }
+
+    private void centerFrame(JInternalFrame frame, JDesktopPane desktopPane) {
+        int x = (desktopPane.getWidth() - frame.getWidth()) / 2;
+        int y = (desktopPane.getHeight() - frame.getHeight()) / 2;
+        frame.setLocation(Math.max(0, x), Math.max(0, y));
+    }
+
     public String getEventTitle(EventMarker marker) {
         try {
             return getMessages().getString(marker.getDescription());

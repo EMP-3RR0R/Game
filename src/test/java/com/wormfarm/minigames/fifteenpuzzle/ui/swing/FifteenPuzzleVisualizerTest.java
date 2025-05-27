@@ -55,7 +55,6 @@ class FifteenPuzzleVisualizerTest {
 
     @Test
     void testClearSpritesResetsFields() throws Exception {
-        // Подделываем loadedSprites и tileImages
         Field spritesF = visualizer.getClass().getDeclaredField("loadedSprites");
         spritesF.setAccessible(true);
         List<BufferedImage> sprites = (List<BufferedImage>) spritesF.get(visualizer);

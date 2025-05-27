@@ -10,33 +10,32 @@ import java.awt.*;
 
 public class FarmObjectsRenderer {
     public static void drawFarmObjects(Graphics2D g, FarmController farm) {
-        // Компостный источник
         if (farm.getCompostSource() != null) {
             CompostSourceRenderer.drawCompostSource(g, farm.getCompostSource());
         }
-        // Улей
+
         if (farm.getBeehive() != null) {
             BeehiveRenderer.drawBeehive(g, farm.getBeehive());
         }
-        // Муравейник
+
         if (farm.getAnthill() != null) {
             AnthillRenderer.drawAnthill(g, farm.getAnthill());
         }
-        // Растения
+
         PlantFieldRenderer.drawPlants(g, farm.getPlantField());
-        // Жуки-навозники
+
         for (DungBeetle beetle : farm.getDungBeetles()) {
             DungBeetleRenderer.drawDungBeetle(g, beetle);
         }
-        // Пчёлы
+
         for (Bee bee : farm.getBees()) {
             BeeRenderer.drawBee(g, bee);
         }
-        // Муравьи
+
         for (Ant ant : farm.getAnts()) {
             AntRenderer.drawAnt(g, ant);
         }
-        // Магазин
+
         MarketMarker market = farm.getMarketMarker();
         if (market != null) {
             drawMarketMarker(g, market);

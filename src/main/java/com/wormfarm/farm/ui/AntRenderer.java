@@ -15,25 +15,20 @@ public class AntRenderer {
         g2.translate(x, y);
         g2.rotate(angle);
 
-        // Задний овал (где тля)
         g2.setColor(new Color(110, 70, 30, 255));
         g2.fillOval(-17, -8, 20, 16);
 
-        // Передний овал
         g2.setColor(new Color(90, 60, 25, 255));
         g2.fillOval(0, -7, 15, 14);
 
-        // Головка
         g2.setColor(new Color(80, 45, 18, 255));
         g2.fillOval(12, -5, 9, 9);
 
-        // Усики
         g2.setStroke(new BasicStroke(2));
         g2.setColor(new Color(60, 30, 10, 255));
         g2.drawLine(16, -5, 22, -13);
         g2.drawLine(16, 5, 22, 13);
 
-        // Если несёт тлю — крупная зелёная тля
         if (ant.isCarryingAphid()) {
             g2.setColor(new Color(130, 200, 90, 255));
             g2.fillOval(-15, -4, 10, 10);

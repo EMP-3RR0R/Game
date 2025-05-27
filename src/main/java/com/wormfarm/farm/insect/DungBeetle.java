@@ -13,7 +13,7 @@ public class DungBeetle extends FarmInsect {
 
     private BeetleState beetleState = BeetleState.IDLE;
     private final CompostSource compostSource;
-    public PlantInstance targetPlant; // public для простоты
+    public PlantInstance targetPlant;
     private final double growthMultiplier;
     private boolean hasBall = false;
     private final int speedWithBall;
@@ -27,7 +27,6 @@ public class DungBeetle extends FarmInsect {
         this.speedWithoutBall = speedWithoutBall;
     }
 
-    // Назначение растения — только один раз!
     public void assignToPlant(PlantInstance plant) {
         this.targetPlant = plant;
         if (plant.getAssignedBeetle() == null) {
@@ -73,7 +72,6 @@ public class DungBeetle extends FarmInsect {
                 }
                 moveToTarget(speedWithBall);
                 if (x == targetPlant.getX() && y == targetPlant.getY()) {
-                    // Просто сбрасываем шар, никаких setAssignedBeetle!
                     hasBall = false;
                     beetleState = BeetleState.TO_COMPOST_NO_BALL;
                     setTarget(compostSource.getX(), compostSource.getY());

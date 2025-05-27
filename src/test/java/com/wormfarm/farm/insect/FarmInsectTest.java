@@ -7,8 +7,6 @@ import java.util.HashSet;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FarmInsectTest {
-
-    // Простая реализация для тестирования абстракта
     static class TestInsect extends FarmInsect {
         boolean idleCalled = false;
         boolean workingCalled = false;
@@ -110,12 +108,11 @@ class FarmInsectTest {
         insect.setTarget(4, 0);
         insect.state = FarmInsect.State.MOVING;
         insect.tick();
-        // move by 2 units
         assertEquals(2, insect.getX());
         assertEquals(0, insect.getY());
         assertFalse(insect.arrivedCalled);
 
-        insect.tick(); // move by 2 more, should arrive now
+        insect.tick();
         assertEquals(4, insect.getX());
         assertEquals(0, insect.getY());
         assertTrue(insect.arrivedCalled);

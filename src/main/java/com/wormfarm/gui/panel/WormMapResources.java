@@ -14,7 +14,6 @@ public class WormMapResources {
     public static final int WORMCOIN_ICON_SIZE = 32;
 
     static {
-        // Земля
         try (InputStream in = WormMapResources.class.getResourceAsStream("/images/ground.png")) {
             if (in != null) {
                 BufferedImage orig = ImageIO.read(in);
@@ -25,7 +24,6 @@ public class WormMapResources {
         } catch (Exception e) {
             groundTexture = null;
         }
-        // Иконка пятнашек
         try (InputStream in = WormMapResources.class.getResourceAsStream("/images/FifteenPuzzle/FifteenPuzzleIcon.png")) {
             if (in != null) {
                 fifteenPuzzleIcon = ImageIO.read(in);
@@ -33,7 +31,6 @@ public class WormMapResources {
         } catch (Exception e) {
             fifteenPuzzleIcon = null;
         }
-        // Иконка WormCoin
         try (InputStream in = WormMapResources.class.getResourceAsStream("/images/WormCoinIcon.png")) {
             if (in != null) {
                 BufferedImage orig = ImageIO.read(in);

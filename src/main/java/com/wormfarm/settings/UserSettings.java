@@ -6,7 +6,7 @@ public class UserSettings implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String language = "en";
-    private float volume = 1.0f; // 0.0 - 1.0
+    private float volume = 1.0f;
 
     public String getLanguage() { return language; }
     public void setLanguage(String lang) { language = lang; }

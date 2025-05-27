@@ -42,7 +42,6 @@ public class WindowStateManager {
                         state.iconY = p.y;
                     } catch (Exception ignored) {}
                 }
-                // Для не-BIF окон — на всякий случай заполним normalX, etc:
                 state.normalX = state.x;
                 state.normalY = state.y;
                 state.normalWidth = state.width;

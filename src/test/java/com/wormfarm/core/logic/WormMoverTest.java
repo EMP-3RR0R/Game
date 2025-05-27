@@ -15,10 +15,10 @@ class WormMoverTest {
 
     @Test
     void testAngleTo() {
-        assertEquals(0.0, WormMover.angleTo(0, 0, 1, 0), 1e-8); // right
-        assertEquals(Math.PI / 2, WormMover.angleTo(0, 0, 0, 1), 1e-8); // up
-        assertEquals(Math.PI, WormMover.angleTo(0, 0, -1, 0), 1e-8); // left
-        assertEquals(3 * Math.PI / 2, WormMover.angleTo(0, 0, 0, -1), 1e-8); // down
+        assertEquals(0.0, WormMover.angleTo(0, 0, 1, 0), 1e-8);
+        assertEquals(Math.PI / 2, WormMover.angleTo(0, 0, 0, 1), 1e-8);
+        assertEquals(Math.PI, WormMover.angleTo(0, 0, -1, 0), 1e-8);
+        assertEquals(3 * Math.PI / 2, WormMover.angleTo(0, 0, 0, -1), 1e-8);
     }
 
     @Test
@@ -41,10 +41,8 @@ class WormMoverTest {
         WormState worm = new WormState(10, 10, 0);
         WormMover.moveWorm(worm, 100, 10, 1, 200, 200);
 
-        // X должен увеличиться, Y почти не меняться, направление не сильно меняться
         assertTrue(worm.getX() > 10);
         assertEquals(10, worm.getY(), 1.0);
-        // направление должно быть чуть больше 0
         assertTrue(worm.getDirection() >= 0 && worm.getDirection() <= 2 * Math.PI);
     }
 
@@ -52,7 +50,6 @@ class WormMoverTest {
     void testMoveWorm_TooClose_NoMove() {
         WormState worm = new WormState(5, 5, 0);
         WormMover.moveWorm(worm, 5.2, 5.2, 1, 200, 200);
-        // Остался на месте, так как дистанция < 0.5
         assertEquals(5, worm.getX(), 1e-8);
         assertEquals(5, worm.getY(), 1e-8);
     }
@@ -61,7 +58,6 @@ class WormMoverTest {
     void testMoveWorm_WallCollision_Left() {
         WormState worm = new WormState(1, 100, Math.PI);
         WormMover.moveWorm(worm, -10, 100, 1, 200, 200);
-        // После столкновения с левой стеной X должен быть >= 0
         assertTrue(worm.getX() >= 0);
         assertTrue(worm.getX() <= 200);
         assertTrue(worm.getY() >= 0 && worm.getY() <= 200);

@@ -8,9 +8,9 @@ public class PlantField {
     public static final int PLANT_START_X = 300;
     public static final int PLANT_START_Y = 300;
     public static final int PLANT_INTERVAL = 20;
-    public static final int FIELD_COLS = 15; // 15 по ширине
-    public static final int FIELD_ROWS = 15; // 15 по высоте
-    public static final int MAX_PLANTS = 225; // 15*15
+    public static final int FIELD_COLS = 15;
+    public static final int FIELD_ROWS = 15;
+    public static final int MAX_PLANTS = 225;
 
     public PlantInstance tryAddPlant(long now) {
         if (plants.size() >= MAX_PLANTS) return null;

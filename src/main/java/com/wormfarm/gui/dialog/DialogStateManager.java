@@ -7,9 +7,6 @@ import java.util.*;
 public class DialogStateManager {
     private final List<DialogState> dialogStates = new ArrayList<>();
 
-    /**
-     * Сохраняет состояния всех активных диалогов.
-     */
     public void captureStates(List<JDialog> dialogs) {
         dialogStates.clear();
         for (JDialog dialog : dialogs) {
@@ -20,7 +17,6 @@ public class DialogStateManager {
             } else if (dialog instanceof com.wormfarm.settings.SettingsDialog) {
                 dialogStates.add(((com.wormfarm.settings.SettingsDialog) dialog).exportState());
             }
-            // Добавляйте другие диалоги по аналогии
         }
     }
 

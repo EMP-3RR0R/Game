@@ -134,7 +134,6 @@ class FifteenPuzzleFrameTest {
         assertFalse(frame.isDisplayable());
     }
 
-    // Добавлено: тест на setMaximum/setIcon & restore
     @Test
     void testMaximizeAndIconifyRestore() throws Exception {
         frame.setVisible(true);

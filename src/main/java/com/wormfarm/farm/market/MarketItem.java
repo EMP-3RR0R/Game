@@ -1,8 +1,5 @@
 package com.wormfarm.farm.market;
 
-/**
- * Модель товара в магазине фермы.
- */
 public class MarketItem {
     public final String name;
     public final Type type;

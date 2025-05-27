@@ -28,4 +28,11 @@ public class BeeData implements Serializable {
     public boolean hasNectar() { return hasNectar; }
     public double getEllipseProgress() { return ellipseProgress; }
     public double getVisualDirectionRad() { return visualDirectionRad; }
+
+    @Override
+    public String toString() {
+        return "BeeData[x=" + x + ",y=" + y + ",state=" + beeState +
+                ",plantIdx=" + assignedPlantIndex + ",nectar=" + hasNectar +
+                ",progress=" + ellipseProgress + ",dir=" + visualDirectionRad + "]";
+    }
 }

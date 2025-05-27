@@ -19,7 +19,6 @@ public class WormStats implements Serializable {
         this.wormCoins = wormCoins;
     }
 
-    // Добавить этот метод:
     public void copyFrom(WormStats other) {
         this.wormCoins = other.wormCoins;
     }

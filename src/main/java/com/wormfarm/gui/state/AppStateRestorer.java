@@ -32,15 +32,12 @@ public class AppStateRestorer {
         boolean profilesExist = Files.exists(Paths.get(PROFILES_DIR, "profile1.state.bin"));
         boolean dialogsStateExists = new File("dialogs.state.bin").exists();
 
-        // --- ВСЕГДА предлагаем профиль если есть хотя бы один! ---
         boolean restored = false;
         if (profilesExist) {
             restored = offerProfileRestore(dialogsStateExists);
         }
-        // Если не восстановлено — ничего не делаем, игра стартует с нуля
     }
 
-    // Возвращает true если профиль был выбран (и восстановлен), false если пользователь выбрал "не загружать"
     private boolean offerProfileRestore(boolean dialogsStateExists) {
         Path profilesDir = Paths.get(PROFILES_DIR);
         List<Integer> existingProfiles = new ArrayList<>();

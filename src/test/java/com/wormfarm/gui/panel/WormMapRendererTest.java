@@ -65,7 +65,6 @@ class WormMapRendererTest {
         WormStatsManager statsManager = mock(WormStatsManager.class);
         FarmController farmController = mock(FarmController.class);
 
-        // Инициализируем все ресурсы, которые используются в рендере
         WormMapResources.fifteenPuzzleIcon = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
         WormMapResources.wormCoinIcon = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
 

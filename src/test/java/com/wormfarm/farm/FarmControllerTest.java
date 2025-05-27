@@ -2,16 +2,11 @@ package com.wormfarm.farm;
 
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.farm.insect.DungBeetle;
-import com.wormfarm.farm.plant.PlantField;
 import com.wormfarm.farm.resource.CompostSource;
-import com.wormfarm.farm.market.MarketMarker;
 import com.wormfarm.farm.plant.PlantInstance;
 import com.wormfarm.core.model.FarmSaveData;
-import com.wormfarm.core.model.PlantData;
-import com.wormfarm.core.model.DungBeetleData;
 import org.junit.jupiter.api.*;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,7 +57,6 @@ class FarmControllerTest {
     void testSetStatsManager() {
         WormStatsManager newStats = mock(WormStatsManager.class);
         controller.setStatsManager(newStats);
-        // Cannot check field directly, but at least not crash
     }
 
     @Test
@@ -75,33 +69,27 @@ class FarmControllerTest {
 
         controller.setGlobalPaused(true);
         controller.tick();
-        // Should not call tick again when paused
         verifyNoMoreInteractions(beetle);
     }
 
     @Test
     void testGrowthTimerAndHarvestTimer_AutoHarvest() throws Exception {
-        // Настроим statsManager чтобы он увеличивал coins
         final int[] coins = {0};
         doAnswer(inv -> {
             coins[0]++;
             return null;
         }).when(statsManager).addCoins(anyInt());
 
-        // Добавим растение, которое готово к сбору
         PlantInstance plant = new PlantInstance(10, 20, System.currentTimeMillis() - 10000);
         controller.getPlantField().getPlants().add(plant);
 
-        // Дадим немного времени таймерам (до 2 секунд)
         TimeUnit.MILLISECONDS.sleep(1200);
 
-        // Должно быть хотя бы одно добавление coins
         assertTrue(coins[0] > 0, "autoHarvestPlants should add at least one coin");
     }
 
     @Test
     void testToSaveDataAndRestoreFromSave() {
-        // Подготовим одну plant и одного beetle
         PlantInstance plant = new PlantInstance(7, 8, 123L);
         plant.setGrowthAccumulatedMillis(555L);
         controller.getPlantField().getPlants().add(plant);
@@ -114,11 +102,9 @@ class FarmControllerTest {
 
         FarmSaveData saveData = controller.toSaveData();
 
-        // Проверяем сериализацию
         assertEquals(1, saveData.getPlants().size());
         assertEquals(1, saveData.getBeetles().size());
 
-        // Создаём новый контроллер и восстанавливаем состояние
         FarmController ctrl2 = new FarmController(compostSource, statsManager);
         ctrl2.restoreFromSave(saveData);
 

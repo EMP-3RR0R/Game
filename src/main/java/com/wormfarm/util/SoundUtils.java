@@ -23,10 +23,9 @@ public class SoundUtils {
             Clip clip = AudioSystem.getClip();
             clip.open(audioStream);
 
-            // Логарифмическая регулировка громкости
             try {
                 FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-                float v = volume; // 0.0 ... 1.0
+                float v = volume;
                 float min = gainControl.getMinimum();
                 float max = gainControl.getMaximum();
                 float dB;
@@ -34,11 +33,10 @@ public class SoundUtils {
                     dB = (float) (20.0 * Math.log10(v));
                     dB = Math.max(min, Math.min(dB, max));
                 } else {
-                    dB = min; // mute
+                    dB = min;
                 }
                 gainControl.setValue(dB);
             } catch (Exception ignored) {
-                // Если не поддерживается — игнорируем
             }
 
             clip.start();

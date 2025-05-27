@@ -35,7 +35,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
         this.gameSessionManager = gameSessionManager;
 
         setTitle(messages.getString("farm.market.title"));
-        // Фиксированный размер, чтобы вместить все элементы
         setSize(740, 450);
         setPreferredSize(new Dimension(740, 450));
         setResizable(false); // Запрещаем изменение размера
@@ -45,7 +44,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
         setOpaque(false);
         setBackground(new Color(255, 255, 255, 220));
 
-        // Верхняя панель с балансом
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 16, 8));
         topPanel.setOpaque(false);
         coinsLabel = new JLabel();
@@ -56,9 +54,8 @@ public class FarmMarketPanel extends BaseInternalFrame {
 
         itemsPanel = new JPanel();
         itemsPanel.setOpaque(false);
-        // Используем GridBagLayout для точного позиционирования
         itemsPanel.setLayout(new GridBagLayout());
-        add(itemsPanel, BorderLayout.CENTER); // Убираем JScrollPane полностью
+        add(itemsPanel, BorderLayout.CENTER);
 
         loadMarketItems();
         updateComponents();
@@ -126,7 +123,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
         gbc.insets = new Insets(5, 10, 5, 10); // Отступы между элементами
         gbc.fill = GridBagConstraints.BOTH;
 
-        // Первый ряд
         gbc.gridy = 0;
         gbc.gridx = 0;
         itemsPanel.add(createMarketCell(marketItems.get(0)), gbc);
@@ -134,7 +130,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
         gbc.gridx = 1;
         itemsPanel.add(createMarketCell(marketItems.get(1)), gbc);
 
-        // Второй ряд
         gbc.gridy = 1;
         gbc.gridx = 0;
         itemsPanel.add(createMarketCell(marketItems.get(2)), gbc);
@@ -149,7 +144,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
 
     private void loadMarketItems() {
         marketItems.clear();
-        // Навозник
         marketItems.add(new MarketItem(
                 messages.getString("market.dungbeetle.name"),
                 MarketItem.Type.INSECT,
@@ -157,7 +151,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
                 messages.getString("market.dungbeetle.effect"),
                 (panel) -> buyDungBeetle(panel)
         ));
-        // Растение
         marketItems.add(new MarketItem(
                 messages.getString("market.plant.name"),
                 MarketItem.Type.PLANT,
@@ -165,7 +158,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
                 messages.getString("market.plant.effect"),
                 (panel) -> buyPlant(panel)
         ));
-        // Пчела
         marketItems.add(new MarketItem(
                 messages.getString("market.bee.name"),
                 MarketItem.Type.INSECT,
@@ -173,7 +165,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
                 messages.getString("market.bee.effect"),
                 (panel) -> buyBee(panel)
         ));
-        // Муравей
         marketItems.add(new MarketItem(
                 messages.getString("market.ant.name"),
                 MarketItem.Type.INSECT,
@@ -187,7 +178,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
         JPanel cell = new JPanel();
         cell.setOpaque(false);
         cell.setLayout(new BoxLayout(cell, BoxLayout.Y_AXIS));
-        // Уменьшаем размеры ячеек
         cell.setPreferredSize(new Dimension(320, 170));
         cell.setMaximumSize(new Dimension(320, 170));
         cell.setBorder(BorderFactory.createCompoundBorder(
@@ -196,7 +186,7 @@ public class FarmMarketPanel extends BaseInternalFrame {
         ));
 
         JLabel nameLabel = new JLabel(item.name, SwingConstants.CENTER);
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 16)); // Уменьшаем шрифт
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         cell.add(nameLabel);
 
@@ -208,7 +198,7 @@ public class FarmMarketPanel extends BaseInternalFrame {
 
         JTextArea effectArea = new JTextArea(item.effect);
         effectArea.setOpaque(false);
-        effectArea.setFont(new Font("Arial", Font.PLAIN, 12)); // Уменьшаем шрифт
+        effectArea.setFont(new Font("Arial", Font.PLAIN, 12));
         effectArea.setLineWrap(true);
         effectArea.setWrapStyleWord(true);
         effectArea.setEditable(false);
@@ -216,7 +206,7 @@ public class FarmMarketPanel extends BaseInternalFrame {
         effectArea.setBackground(new Color(0,0,0,0));
         effectArea.setAlignmentX(Component.CENTER_ALIGNMENT);
         effectArea.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
-        effectArea.setMaximumSize(new Dimension(250, 60)); // Уменьшаем высоту
+        effectArea.setMaximumSize(new Dimension(250, 60));
         cell.add(effectArea);
 
         JLabel priceLabel = new JLabel(messages.getString("market.price") + ": " + item.price + " WC", SwingConstants.CENTER);
@@ -287,7 +277,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
     boolean buyBee(JComponent panel) {
         Beehive beehive = farmController.getBeehive();
         Bee bee = new Bee(beehive.getX(), beehive.getY(), beehive, 3);
-        // Назначаем на первое растение без пчелы
         for (PlantInstance plant : farmController.getPlantField().getPlants()) {
             if (plant.getPriceMultiplier() == 1.0) {
                 bee.assignToPlant(plant);
@@ -302,7 +291,6 @@ public class FarmMarketPanel extends BaseInternalFrame {
     boolean buyAnt(JComponent panel) {
         Anthill anthill = farmController.getAnthill();
         Ant ant = new Ant(anthill.getX(), anthill.getY(), anthill, 2);
-        // Назначаем на первое растение без муравья (по простоте: priceMultiplier == 1.0)
         for (PlantInstance plant : farmController.getPlantField().getPlants()) {
             if (plant.getGrowthSpeedMultiplier() == 1.0) {
                 ant.assignToPlant(plant);

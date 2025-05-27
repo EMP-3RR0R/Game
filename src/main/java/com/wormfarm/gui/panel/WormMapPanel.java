@@ -79,7 +79,6 @@ public class WormMapPanel extends JPanel {
     private long lastMarketCloseTime = 0;
     private static final int MARKET_TIMEOUT_MS = 5000;
 
-    // --- Suppress auto-opening market on profile restore ---
     private boolean suppressMarketOnRestore = false;
     public void suppressMarketOnRestoreOnce() { this.suppressMarketOnRestore = true; }
 
@@ -243,7 +242,6 @@ public class WormMapPanel extends JPanel {
         WormMapRenderer.paintWholeMap(this, g, worm, mapModel, worm.getTargetX(), worm.getTargetY(), statsManager, messages, farmController);
     }
 
-    // Глобальная пауза (только для меню)
     public void pauseGame() {
         setPaused(true);
         timerRedraw.stop();
@@ -304,7 +302,6 @@ public class WormMapPanel extends JPanel {
         int wormY = (int) worm.getY();
         long now = System.currentTimeMillis();
 
-        // --- Suppress auto-market opening after profile restore ---
         if (suppressMarketOnRestore) {
             suppressMarketOnRestore = false;
             return;
@@ -313,7 +310,6 @@ public class WormMapPanel extends JPanel {
         if (marketOpen) return;
         if (now - lastMarketCloseTime < MARKET_TIMEOUT_MS) return;
 
-        // --- ДОБАВЛЯЕМ ПРОВЕРКУ suppression-флага ---
         if (gameSessionManager != null && !gameSessionManager.canActivateEvent()) return;
 
         if (market != null && market.contains(wormX, wormY)) {
@@ -321,7 +317,6 @@ public class WormMapPanel extends JPanel {
         }
     }
 
-    // Маркет и пятнашки — только визуальная пауза!
     private void openMarketWindow() {
         if (getDesktopPane() != null && !marketOpen) {
             setPaused(true);
@@ -338,7 +333,6 @@ public class WormMapPanel extends JPanel {
                 return true;
             });
 
-            // --- Вот сюда добавь обработчик ---
             marketPanel.addComponentListener(new ComponentAdapter() {
                 @Override
                 public void componentMoved(ComponentEvent e) {
@@ -353,7 +347,6 @@ public class WormMapPanel extends JPanel {
             getDesktopPane().add(marketPanel);
             marketPanel.setVisible(true);
 
-            // --- Сразу после показа форсируем repaint карты ---
             repaint();
 
             marketPanel.setLocation(50, 10);

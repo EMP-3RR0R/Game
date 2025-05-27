@@ -7,9 +7,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.ResourceBundle;
 
-/**
- * Диалог выбора сохранения с поддержкой сериализации состояния.
- */
 public class LoadGameDialog extends JDialog {
     String selectedName = null;
     private final ResourceBundle messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());
@@ -86,7 +83,6 @@ public class LoadGameDialog extends JDialog {
         state.width = getWidth();
         state.height = getHeight();
         state.visible = isVisible();
-        // Сохраняем выбранный слот, если выбран (можно передавать через extra)
         int selIdx = savesList.getSelectedIndex();
         state.extra = (selIdx >= 0) ? String.valueOf(selIdx) : null;
         return state;
@@ -96,7 +92,6 @@ public class LoadGameDialog extends JDialog {
         setLocation(state.x, state.y);
         setSize(state.width, state.height);
         setVisible(state.visible);
-        // Восстанавливаем выбранный индекс, если был сохранён
         if (state.extra != null) {
             try {
                 int idx = Integer.parseInt(state.extra);

@@ -25,7 +25,6 @@ class PlantInstanceTest {
         DungBeetle beetle2 = mock(DungBeetle.class);
         plant.setAssignedBeetle(beetle1);
         assertEquals(beetle1, plant.getAssignedBeetle());
-        // try set again, should not override
         plant.setAssignedBeetle(beetle2);
         assertEquals(beetle1, plant.getAssignedBeetle());
     }
@@ -42,10 +41,8 @@ class PlantInstanceTest {
     @Test
     void testSetGlobalPausedAndResume() {
         PlantInstance plant = new PlantInstance(0, 0, 500L);
-        // simulate work, then pause
         plant.setGlobalPaused(true, 2000L);
         assertTrue(plant.isPaused());
-        // resume
         plant.setGlobalPaused(false, 3000L);
         assertFalse(plant.isPaused());
     }
@@ -53,9 +50,7 @@ class PlantInstanceTest {
     @Test
     void testIsReadyToHarvestAndGrowthMillis() {
         PlantInstance plant = new PlantInstance(0, 0, 1000L);
-        // let 8 seconds pass
         assertFalse(plant.isReadyToHarvest(9000L));
-        // let 10+ seconds pass
         assertTrue(plant.isReadyToHarvest(11000L));
         assertTrue(plant.getGrowthMillis(11000L) >= 10000L);
     }

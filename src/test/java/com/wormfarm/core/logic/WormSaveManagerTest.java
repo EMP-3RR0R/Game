@@ -20,7 +20,6 @@ class WormSaveManagerTest {
 
     @BeforeEach
     void setupSaveDir() {
-        // Очищаем папку перед каждым тестом
         File dir = tempDir.toFile();
         File[] files = dir.listFiles();
         if (files != null) {
@@ -40,7 +39,7 @@ class WormSaveManagerTest {
         String saveName = "testsave1";
 
         assertFalse(WormSaveManager.hasSave(saveName), "Save must not exist before saving");
-        WormSaveManager.save(state, stats, targetX, targetY, null, saveName); // null FarmSaveData
+        WormSaveManager.save(state, stats, targetX, targetY, null, saveName);
         assertTrue(WormSaveManager.hasSave(saveName), "Save must exist after saving");
     }
 
@@ -51,7 +50,7 @@ class WormSaveManagerTest {
         int targetX = 333;
         int targetY = 444;
         String saveName = "loadsave1";
-        WormSaveManager.save(originalState, originalStats, targetX, targetY, null, saveName); // null FarmSaveData
+        WormSaveManager.save(originalState, originalStats, targetX, targetY, null, saveName);
 
         WormState loadedState = new WormState(0, 0, 0);
         WormStats loadedStats = new WormStats(0);
@@ -62,7 +61,7 @@ class WormSaveManagerTest {
                     loadedTarget[0] = x;
                     loadedTarget[1] = y;
                 },
-                (farmSave, found) -> {}, // no-op farm consumer
+                (farmSave, found) -> {},
                 saveName);
 
         assertAll("Loaded state/coins/targets are correct",
@@ -118,7 +117,6 @@ class WormSaveManagerTest {
 
     @Test
     void listSavesEmptyIfNoneExist() {
-        // Ещё раз очищаем папку на всякий случай
         File dir = tempDir.toFile();
         File[] files = dir.listFiles();
         if (files != null) {

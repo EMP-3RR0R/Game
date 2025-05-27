@@ -260,17 +260,19 @@ public class FarmController {
                     if (assignedPlant != null)
                         beetle.setTarget(assignedPlant.getX(), assignedPlant.getY());
                 }
-                case IDLE -> {}
+                case IDLE -> {
+                }
             }
 
             dungBeetles.add(beetle);
             System.out.println("[DEBUG] restoreFromSave: Beetle x=" + bd.getX() + " y=" + bd.getY() + " state=" + bd.getBeetleState() + " plantIdx=" + bd.getAssignedPlantIndex() + " hasBall=" + bd.hasBall());
         }
-        // Восстановление пчел
         bees.clear();
         for (BeeData bd : saveData.getBees()) {
+
             Bee bee = new Bee(bd.getX(), bd.getY(), beehive, 3);
-            bee.setBeeState(Bee.BeeState.valueOf(bd.getBeeState()));
+            Bee.BeeState state = Bee.BeeState.valueOf(bd.getBeeState());
+            bee.setBeeState(state);
             bee.setHasNectar(bd.hasNectar());
             bee.setEllipseProgress(bd.getEllipseProgress());
             bee.setVisualDirectionRad(bd.getVisualDirectionRad());
@@ -278,52 +280,47 @@ public class FarmController {
             PlantInstance assignedPlant = null;
             if (bd.getAssignedPlantIndex() != null && bd.getAssignedPlantIndex() < plants.size()) {
                 assignedPlant = plants.get(bd.getAssignedPlantIndex());
-                bee.assignToPlant(assignedPlant);
-            }
 
-            // Восстанавливаем позицию в зависимости от состояния и прогресса движения
-            if (assignedPlant != null) {
-                switch (bee.getBeeState()) {
-                    case TO_PLANT -> {
-                        // Рассчитываем позицию на пути к растению
-                        bee.setX(bd.getX());
-                        bee.setY(bd.getY());
+                bee.setTargetPlant(assignedPlant);
+
+                switch (state) {
+                    case TO_PLANT:
                         bee.setTarget(assignedPlant.getX(), assignedPlant.getY());
-                    }
-                    case WITH_NECTAR_TO_HIVE -> {
-                        // Рассчитываем позицию на пути к улью
-                        bee.setX(bd.getX());
-                        bee.setY(bd.getY());
+                        break;
+                    case WITH_NECTAR_TO_HIVE:
                         bee.setTarget(beehive.getX(), beehive.getY());
-                    }
-                    case IDLE -> {
-                        // Оставляем на текущей позиции
-                        bee.setX(bd.getX());
-                        bee.setY(bd.getY());
-                    }
+                        break;
+                    case IDLE:
+                        break;
                 }
             } else {
-                // Если растения нет, оставляем на сохраненной позиции
-                bee.setX(bd.getX());
-                bee.setY(bd.getY());
             }
+
+            bee.setX(bd.getX());
+            bee.setY(bd.getY());
 
             bees.add(bee);
         }
         ants.clear();
         for (AntData ad : saveData.getAnts()) {
             Ant ant = new Ant(ad.getX(), ad.getY(), anthill, 2);
-            ant.setX(ad.getX());
-            ant.setY(ad.getY());
+
             ant.setAntState(Ant.AntState.valueOf(ad.getAntState()));
             ant.setHasAphid(ad.hasAphid());
-            ant.setEllipseProgress(ad.getEllipseProgress());
+            ant.setEllipseProgress(ad.getEllipseProgress()); // Ключевая строка!
             ant.setVisualDirectionRad(ad.getVisualDirectionRad());
-            PlantInstance assignedPlant = null;
-            if (ad.getAssignedPlantIndex() != null && ad.getAssignedPlantIndex() < plants.size()) {
-                assignedPlant = plants.get(ad.getAssignedPlantIndex());
-                ant.setTargetPlant(assignedPlant);
+
+            if (ad.getAssignedPlantIndex() != null) {
+                PlantInstance plant = plants.get(ad.getAssignedPlantIndex());
+                ant.setTargetPlant(plant);
+
+                if (ant.getAntState() == Ant.AntState.TO_PLANT) {
+                    ant.setTarget(plant.getX(), plant.getY());
+                } else if (ant.getAntState() == Ant.AntState.WITH_APHID_TO_ANTHILL) {
+                    ant.setTarget(anthill.getX(), anthill.getY());
+                }
             }
+
             ants.add(ant);
         }
     }

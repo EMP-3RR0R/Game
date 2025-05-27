@@ -37,7 +37,6 @@ public class DialogManager {
         openDialogs.remove(dialog);
     }
 
-    /** Сохраняет состояния всех открытых диалогов в файл "dialogs.state.bin". */
     public void saveDialogStates() {
         dialogStateManager.captureStates(openDialogs);
         try {
@@ -47,7 +46,6 @@ public class DialogManager {
         }
     }
 
-    /** Восстанавливает состояния диалогов из файла "dialogs.state.bin". */
     public void restoreDialogStates() {
         try {
             dialogStateManager.loadFromFile(new File("dialogs.state.bin"));
@@ -77,7 +75,6 @@ public class DialogManager {
         }
     }
 
-    // Методы для удобного открытия диалогов с учётом списка openDialogs
     public void showLoadGameDialog() {
         LoadGameDialog dlg = new LoadGameDialog(frame, gameSessionManager.getAvailableSaves());
         addDialog(dlg);

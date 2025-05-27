@@ -18,8 +18,6 @@ import javax.swing.*;
 import java.io.*;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.ArrayList;
 
 public class GameSessionManager {
@@ -37,7 +35,6 @@ public class GameSessionManager {
 
     private FarmController farmController;
 
-    // suppression logic
     private int restoredResumableWindows = 0;
     private long suppressResumableWindowsUntil = 0;
 
@@ -117,7 +114,6 @@ public class GameSessionManager {
 
         CompostSource compostSource = new CompostSource(600, 600, 30);
 
-        // --- Корректно останавливаем старый FarmController ---
         if (farmController != null) {
             farmController.shutdown();
         }
@@ -203,7 +199,6 @@ public class GameSessionManager {
 
             CompostSource compostSource = new CompostSource(600, 600, 30);
 
-            // --- Корректно останавливаем старый FarmController ---
             if (farmController != null) {
                 farmController.shutdown();
             }
@@ -273,7 +268,6 @@ public class GameSessionManager {
 
         CompostSource compostSource = new CompostSource(600, 600, 30);
 
-        // --- Корректно останавливаем старый FarmController ---
         if (this.farmController != null) {
             this.farmController.shutdown();
         }
@@ -298,15 +292,6 @@ public class GameSessionManager {
         frame.revalidate();
         frame.repaint();
         currentMapPanel.requestFocusInWindow();
-    }
-
-    public void openSettings() {
-        pauseGameIfPossible();
-        resumeGameIfPossible();
-    }
-
-    public void setGameState(WormState state, WormStatsManager statsManager) {
-        setGameStateWithFarm(state, statsManager, null);
     }
 
     public void exitGame() {

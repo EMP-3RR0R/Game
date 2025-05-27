@@ -41,7 +41,7 @@ class GameSessionManagerTest {
     @Test
     void testCanActivateEventFlag() {
         Assertions.assertTrue(gsm.canActivateEvent());
-        gsm.setRestoredResumableWindows(1); // исправление
+        gsm.setRestoredResumableWindows(1);
         gsm.onResumableWindowClosed();
         Assertions.assertFalse(gsm.canActivateEvent());
     }

@@ -25,7 +25,6 @@ public class WormMapRenderer {
     ) {
         Graphics2D g2d = (Graphics2D) g.create();
 
-        // Фон
         WormMapResources.paintGround(g2d, panel.getWidth(), panel.getHeight());
 
         g2d.setColor(Color.DARK_GRAY);
@@ -43,9 +42,7 @@ public class WormMapRenderer {
             }
         }
 
-        // ФЕРМА: компост, улей, муравейник, растения, жуки, пчёлы, муравьи, магазин
         if (farmController != null) {
-            // CompostSource, Beehive, Anthill – рендерим явно
             if (farmController.getCompostSource() != null) {
                 com.wormfarm.farm.ui.CompostSourceRenderer.drawCompostSource(g2d, farmController.getCompostSource());
             }
@@ -55,7 +52,6 @@ public class WormMapRenderer {
             if (farmController.getAnthill() != null) {
                 AnthillRenderer.drawAnthill(g2d, farmController.getAnthill());
             }
-            // Остальные объекты (растения, жуки, пчёлы, муравьи, магазин)
             FarmObjectsRenderer.drawFarmObjects(g2d, farmController);
         }
 

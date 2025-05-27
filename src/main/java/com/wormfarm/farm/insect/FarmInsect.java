@@ -4,19 +4,19 @@ import java.io.Serializable;
 import java.util.UUID;
 
 public abstract class FarmInsect implements Serializable {
-    protected final String id;      // Уникальный идентификатор
-    protected String name;          // Имя или тип насекомого
-    protected int x, y;             // Положение на карте
-    protected int speed;            // Скорость перемещения
-    protected State state;          // Текущее состояние
-    protected Integer targetX;      // Цель по X (может быть null)
-    protected Integer targetY;      // Цель по Y (может быть null)
+    protected final String id;
+    protected String name;
+    protected int x, y;
+    protected int speed;
+    protected State state;
+    protected Integer targetX;
+    protected Integer targetY;
 
     public enum State {
-        IDLE,           // Ожидание
-        MOVING,         // В движении к цели
-        WORKING,        // Выполняет задание
-        CUSTOM          // Для расширения
+        IDLE,
+        MOVING,
+        WORKING,
+        CUSTOM
     }
 
     public FarmInsect(String name, int startX, int startY, int speed) {
@@ -51,7 +51,6 @@ public abstract class FarmInsect implements Serializable {
     }
 
     protected void onIdle() {
-        // По умолчанию ничего не делает
     }
 
     protected void moveToTarget() {
@@ -67,16 +66,13 @@ public abstract class FarmInsect implements Serializable {
     }
 
     protected void onArrived() {
-        // По умолчанию становится WORKING
         state = State.WORKING;
     }
 
     protected void onWorking() {
-        // По умолчанию ничего не делает
     }
 
     protected void onCustom() {
-        // Для расширения в наследниках
     }
 
     public void goTo(int x, int y) {
