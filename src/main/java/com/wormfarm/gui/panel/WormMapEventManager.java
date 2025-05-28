@@ -7,6 +7,7 @@ import com.wormfarm.core.logic.WormMover;
 import com.wormfarm.core.logic.WormStatsManager;
 import com.wormfarm.gui.base.BaseInternalFrame;
 import com.wormfarm.minigames.fifteenpuzzle.ui.swing.FifteenPuzzleFrame;
+import com.wormfarm.minigames.blindsort.ui.swing.BlindSortFrame; // <-- ДОБАВЛЕНО
 import com.wormfarm.settings.AppLocale;
 
 import javax.swing.*;
@@ -78,6 +79,8 @@ public class WormMapEventManager {
 
         if ("puzzle.title".equals(marker.getDescription())) {
             activateFifteenPuzzle(ownerFrame, statsManager, onClose);
+        } else if ("blindsort.title".equals(marker.getDescription())) {
+            activateBlindSort(ownerFrame, statsManager, onClose);
         }
     }
 
@@ -96,6 +99,28 @@ public class WormMapEventManager {
                     : new FifteenPuzzleFrame();
 
             setupGameFrame(puzzleFrame, desktopPane, onClose);
+        });
+    }
+
+    private void activateBlindSort(JFrame ownerFrame, WormStatsManager statsManager, Runnable onClose) {
+        panel.setPaused(true);
+        SwingUtilities.invokeLater(() -> {
+            JDesktopPane desktopPane = panel.getDesktopPane();
+            if (desktopPane == null) {
+                JOptionPane.showMessageDialog(ownerFrame, getMessages().getString("error.no_desktop_pane"));
+                if (onClose != null) onClose.run();
+                return;
+            }
+
+            BlindSortFrame blindSortFrame = new BlindSortFrame(
+                    statsManager,
+                    panel.getGameSessionManager().getSettings(),
+                    false,
+                    panel.getGameSessionManager()
+            );
+
+            setupGameFrame(blindSortFrame, desktopPane, onClose);
+            panel.setPaused(false);
         });
     }
 
@@ -136,9 +161,10 @@ public class WormMapEventManager {
         frame.setVisible(true);
         try {
             frame.setSelected(true);
+            frame.setMaximum(true);
+        } catch (java.beans.PropertyVetoException e) {
+            e.printStackTrace();
         } catch (Exception ignored) {}
-
-        centerFrame(frame, desktopPane);
     }
 
     private void centerFrame(JInternalFrame frame, JDesktopPane desktopPane) {

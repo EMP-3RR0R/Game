@@ -161,6 +161,7 @@ public class WormMapPanel extends JPanel {
 
         setDoubleBuffered(true);
         mapModel.addMarker(new EventMarker(200, 200, "puzzle.title"));
+        mapModel.addMarker(new EventMarker(600, 200, "blindsort.title")); // <-- ДОБАВЛЕНО
 
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
                 .put(KeyStroke.getKeyStroke("ESCAPE"), "showPauseMenu");

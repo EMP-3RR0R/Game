@@ -11,6 +11,7 @@ import com.wormfarm.core.model.WormStats;
 import com.wormfarm.settings.UserSettings;
 import com.wormfarm.settings.AppLocale;
 import com.wormfarm.farm.FarmController;
+import com.wormfarm.minigames.blindsort.ui.swing.BlindSortFrame; // <-- ДОБАВЛЕНО
 
 import javax.swing.*;
 import java.io.*;
@@ -226,6 +227,14 @@ public class WindowProfileManager {
                     case "minigame.fifteen.puzzle":
                         System.out.println("Восстанавливаем окно: minigame.fifteen.puzzle");
                         return new com.wormfarm.minigames.fifteenpuzzle.ui.swing.FifteenPuzzleFrame(gameSessionManager);
+                    case "blindsort.title": // <-- ДОБАВЛЕНО
+                        System.out.println("Восстанавливаем окно: blindsort.title");
+                        return new BlindSortFrame(
+                                statsManager,
+                                settings,
+                                true, // restoreMode = true при восстановлении
+                                gameSessionManager
+                        );
                     case "farm.market":
                         System.out.println("Восстанавливаем окно: farm.market");
                         FarmController farmController = gameSessionManager.getFarmController();
@@ -248,10 +257,11 @@ public class WindowProfileManager {
 
             boolean hasPause = restoredWindowKeys.contains("pause.menu");
             boolean hasFifteen = restoredWindowKeys.contains("minigame.fifteen.puzzle");
+            boolean hasBlindSort = restoredWindowKeys.contains("blindsort.title"); // <-- ДОБАВЛЕНО
             boolean hasMarket = restoredWindowKeys.contains("farm.market");
             System.out.println("Восстановленные окна: " + restoredWindowKeys);
 
-            if (hasPause || hasFifteen || hasMarket) {
+            if (hasPause || hasFifteen || hasBlindSort || hasMarket) { // <-- ДОБАВЛЕНО hasBlindSort
                 gameSessionManager.pauseGameIfPossible();
             } else {
                 if (gameSessionManager.getCurrentMapPanel() != null) {
@@ -259,7 +269,7 @@ public class WindowProfileManager {
                 }
             }
 
-            Set<String> resumableKeys = new HashSet<>(Arrays.asList("pause.menu", "minigame.fifteen.puzzle", "farm.market"));
+            Set<String> resumableKeys = new HashSet<>(Arrays.asList("pause.menu", "minigame.fifteen.puzzle", "farm.market", "blindsort.title")); // <-- ДОБАВЛЕНО "blindsort.title"
             int restoredResumableCount = 0;
             for (String key : restoredWindowKeys) {
                 if (resumableKeys.contains(key)) restoredResumableCount++;
