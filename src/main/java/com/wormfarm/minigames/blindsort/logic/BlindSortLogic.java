@@ -21,25 +21,25 @@ public class BlindSortLogic implements BlindSortGame {
         PLAYER, FAST_AI, SLOW_AI
     }
 
-    private final int[][] playerNumbers;
-    private final int[][] fastAINumbers;
-    private final int[][] slowAINumbers;
+    public final int[][] playerNumbers;
+    final int[][] fastAINumbers;
+    final int[][] slowAINumbers;
 
-    private final Map<ArrayOwner, Integer> ownerVisibleDigits = new EnumMap<>(ArrayOwner.class);
-    private final Map<ArrayOwner, Boolean> ownerFinalStageActive = new EnumMap<>(ArrayOwner.class);
+    final Map<ArrayOwner, Integer> ownerVisibleDigits = new EnumMap<>(ArrayOwner.class);
+    final Map<ArrayOwner, Boolean> ownerFinalStageActive = new EnumMap<>(ArrayOwner.class);
 
     private final List<BlindSortEventListener> listeners = new ArrayList<>();
     private final Random random = new Random();
     private transient long startTime;
-    private BlindSortAI fastAI;
-    private BlindSortAI slowAI;
+    BlindSortAI fastAI;
+    BlindSortAI slowAI;
     private boolean paused;
     private long pauseTime;
 
     private int swapCount = 0;
-    private boolean isGameActive;
+    public boolean isGameActive;
 
-    private final Map<ArrayOwner, AtomicBoolean> animationInProgressMap = new EnumMap<>(ArrayOwner.class);
+    final Map<ArrayOwner, AtomicBoolean> animationInProgressMap = new EnumMap<>(ArrayOwner.class);
     private String fastAIStrategyName;
     private String slowAIStrategyName;
 

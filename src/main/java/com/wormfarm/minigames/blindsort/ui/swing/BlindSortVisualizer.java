@@ -17,9 +17,9 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BlindSortVisualizer extends JPanel implements BlindSortEventListener {
-    private final BlindSortLogic gameLogic;
-    private BlindSortController controllerCallback;
-    private ResourceBundle messages;
+    final BlindSortLogic gameLogic;
+    BlindSortController controllerCallback;
+    ResourceBundle messages;
 
     private final int cubeWidth;
     private final int cubeHeight;
@@ -28,10 +28,10 @@ public class BlindSortVisualizer extends JPanel implements BlindSortEventListene
     private final int rowPadding = 30;
     private final int labelOffset = 20;
 
-    private Integer playerSelectedIndex = null;
-    private Integer playerHoveredIndex = null;
+    Integer playerSelectedIndex = null;
+    Integer playerHoveredIndex = null;
 
-    private final Map<ArrayOwner, AnimationState> animationStates = new ConcurrentHashMap<>();
+    final Map<ArrayOwner, AnimationState> animationStates = new ConcurrentHashMap<>();
 
     private final Color PLAYER_CUBE_COLOR = new Color(70, 130, 180);
     private final Color FAST_AI_CUBE_COLOR = new Color(255, 165, 0);
@@ -40,7 +40,7 @@ public class BlindSortVisualizer extends JPanel implements BlindSortEventListene
     private final Color SELECTED_BORDER_COLOR = Color.RED;
     private final Color DEFAULT_BORDER_COLOR = Color.DARK_GRAY;
 
-    private class AnimationState {
+    class AnimationState {
         Timer timer;
         int[] swappingIndices = null;
         float progress = 0f;
@@ -49,7 +49,7 @@ public class BlindSortVisualizer extends JPanel implements BlindSortEventListene
         float liftProgress = 0f;
         boolean lifting = false;
 
-        private int[][] numbersBeingSwapped;
+        int[][] numbersBeingSwapped;
         private int originalX1, originalY1, originalX2, originalY2;
 
         AnimationState(ArrayOwner owner) {
@@ -141,9 +141,10 @@ public class BlindSortVisualizer extends JPanel implements BlindSortEventListene
 
         int numbersCount = gameLogic.getNumbersCopy().length;
         int totalHorizontalSpacing = (numbersCount + 1) * cubeSpacing;
-
-        this.cubeWidth = Math.max(30, (width - totalHorizontalSpacing) / numbersCount);
-        this.cubeHeight = Math.max(40, (height - (3 * labelOffset) - (2 * rowSpacing) - (2 * rowPadding)) / 3);
+        int baseCubeWidth = (width - totalHorizontalSpacing) / numbersCount;
+        int baseCubeHeight = (height - (3 * labelOffset) - (2 * rowSpacing) - (2 * rowPadding)) / 3;
+        this.cubeWidth = Math.max(30, (int) (baseCubeWidth * 0.85));
+        this.cubeHeight = Math.max(40, (int) (baseCubeHeight * 0.85));
 
         setPreferredSize(new Dimension(width, height));
         setFocusable(true);
@@ -256,7 +257,7 @@ public class BlindSortVisualizer extends JPanel implements BlindSortEventListene
         repaint();
     }
 
-    private int getCubeIndexAt(int mouseX, int mouseY, ArrayOwner owner) {
+    int getCubeIndexAt(int mouseX, int mouseY, ArrayOwner owner) {
         int rowY = owner.ordinal() * (cubeHeight + rowSpacing + labelOffset) + rowPadding + labelOffset + 5;
 
         if (mouseY >= rowY && mouseY <= rowY + cubeHeight) {
@@ -272,9 +273,9 @@ public class BlindSortVisualizer extends JPanel implements BlindSortEventListene
         return -1;
     }
 
-    private String getStrategyName(String strategyKey) {
+    String getStrategyName(String strategyKey) {
         return messages.getString("strategy." + strategyKey);
-        }
+    }
 
     public void updateLocale() {
         this.messages = ResourceBundle.getBundle("com.wormfarm.gui.messages", AppLocale.getLocale());

@@ -17,7 +17,7 @@ public abstract class BaseBlindSortAI implements BlindSortAI, Runnable {
     protected AISortingStrategy strategy;
     protected double errorChance;
 
-    private Thread sortingThread;
+    Thread sortingThread;
 
     public BaseBlindSortAI(int baseDelay, String aiName, ArrayOwner owner, AISortingStrategy strategy, double errorChance) {
         this.baseDelay = baseDelay;

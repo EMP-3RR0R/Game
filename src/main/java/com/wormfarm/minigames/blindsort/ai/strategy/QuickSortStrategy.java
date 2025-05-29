@@ -35,7 +35,7 @@ public class QuickSortStrategy implements AISortingStrategy {
         return "quick";
     }
 
-    private int compareNumbers(int[] num1Digits, int[] num2Digits, int visibleDigits) {
+    int compareNumbers(int[] num1Digits, int[] num2Digits, int visibleDigits) {
         if (visibleDigits == 5) {
             long num1 = convertDigitsToLong(num1Digits);
             long num2 = convertDigitsToLong(num2Digits);
@@ -46,7 +46,7 @@ public class QuickSortStrategy implements AISortingStrategy {
         }
     }
 
-    private long convertDigitsToLong(int[] digits) {
+    long convertDigitsToLong(int[] digits) {
         long number = 0;
         for (int digit : digits) {
             number = number * 10 + digit;

@@ -16,14 +16,14 @@ import java.awt.event.ComponentEvent;
 import java.util.ResourceBundle;
 
 public class BlindSortFrame extends BaseMiniGameFrame {
-    private final BlindSortLogic game;
-    private final BlindSortVisualizer visualizer;
-    private final ResourceBundle messages;
-    private Timer uiTimer;
-    private JLabel timerLabel;
-    private JLabel swapCountLabel;
-    private JLabel stageLabel;
-    private GameSessionManager gameSessionManager;
+    public BlindSortLogic game;
+    public BlindSortVisualizer visualizer;
+    public ResourceBundle messages;
+    public Timer uiTimer;
+    public JLabel timerLabel;
+    public JLabel swapCountLabel;
+    public JLabel stageLabel;
+    public GameSessionManager gameSessionManager;
 
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
@@ -57,7 +57,7 @@ public class BlindSortFrame extends BaseMiniGameFrame {
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION);
     }
 
-    private void initUI() {
+    public void initUI() {
         setTitle(messages.getString("blindsort.title"));
         setClosable(true);
         setMaximizable(true);
@@ -124,7 +124,7 @@ public class BlindSortFrame extends BaseMiniGameFrame {
         updateInfo();
     }
 
-    private void updateInfo() {
+    public void updateInfo() {
         long elapsedTime = game.getElapsedTime() / 1000;
         long minutes = elapsedTime / 60;
         long seconds = elapsedTime % 60;
@@ -133,6 +133,9 @@ public class BlindSortFrame extends BaseMiniGameFrame {
         stageLabel.setText(game.isFinalStage() ? messages.getString("blindsort.stage") + ": " + messages.getString("blindsort.stage_final") :
                 messages.getString("blindsort.stage") + ": " + game.getVisibleDigits());
         visualizer.repaint();
+        if (!game.isGameActive() && uiTimer != null && uiTimer.isRunning()) {
+            uiTimer.stop();
+        }
     }
 
     @Override

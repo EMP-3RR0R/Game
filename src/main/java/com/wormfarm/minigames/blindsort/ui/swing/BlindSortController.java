@@ -16,7 +16,7 @@ import java.util.ResourceBundle;
 
 public class BlindSortController {
     private final BlindSortLogic game;
-    private final BlindSortVisualizer visualizer;
+    final BlindSortVisualizer visualizer;
     private final WormStatsManager statsManager;
     private final Component parentComponent;
     private final ResourceBundle messages;
